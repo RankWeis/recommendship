@@ -1,0 +1,11 @@
+{
+	"name": "Recommendship",
+	"short_name": "Recommendship",
+	"description": "Track who recommends what, and learn whose picks you love.",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"theme_color": "#1f6f5c",
+	"background_color": "#f7f5f0",
+	"icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

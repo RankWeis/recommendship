@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://unpkg.com/@powersync/service-schema@1.27.0/json-schema/powersync-config.json
+#
+# The same file runs locally (docker compose) and on Fly; only the PS_* env vars differ.
+
+replication:
+  connections:
+    - type: postgresql
+      uri: !env PS_SOURCE_DB_URI
+      sslmode: !env PS_SSLMODE
+
+# Bucket storage in Postgres (no MongoDB to run). Locally it shares the server
+# with the source database, which is fine on Postgres 14+.
+storage:
+  type: postgresql
+  uri: !env PS_STORAGE_DB_URI
+  sslmode: !env PS_SSLMODE
+
+port: !env PS_PORT::number
+
+sync_config:
+  path: sync-config.yaml
+
+# Tokens come from Better Auth's JWT plugin (EdDSA, 15 minutes, sub = user id).
+client_auth:
+  jwks_uri: !env PS_JWKS_URI
+  audience: ['recommendship']
+
+system:
+  logging:
+    level: info
+    format: text

@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  pull_request:
+  # Deploy calls this first, so main is tested once per push.
+  workflow_call:
+
+jobs:
+  test:
+    name: Typecheck, unit tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      # Scoring, schema parity, and the API's write/invite rules (on PGlite, no Docker needed).
+      - run: pnpm test
+      - run: pnpm build
+
+  e2e:
+    name: Sync and offline capture (full local stack)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Local API config
+        run: |
+          cp apps/server/.env.example apps/server/.env
+          sed -i "s/^BETTER_AUTH_SECRET=$/BETTER_AUTH_SECRET=$(openssl rand -hex 32)/" apps/server/.env
+      - name: Postgres + PowerSync
+        run: pnpm stack
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: playwright-traces
+          path: test-results
+      - if: failure()
+        run: docker compose logs powersync --tail 200

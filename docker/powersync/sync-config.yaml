@@ -1,0 +1,17 @@
+config:
+  edition: 3
+
+streams:
+  # Everything a user owns, as one bucket per user, synced as soon as they connect.
+  # Unapproved accounts (no approved_at yet) match nothing, so they get no data:
+  # the invite gate holds even if someone gets hold of a token.
+  my_data:
+    auto_subscribe: true
+    with:
+      me: SELECT id FROM app_user WHERE id = auth.user_id() AND approved_at IS NOT NULL
+    queries:
+      - SELECT * FROM app_user WHERE id IN me
+      - SELECT * FROM category WHERE user_id IN me
+      - SELECT * FROM recommender WHERE user_id IN me
+      - SELECT * FROM item WHERE user_id IN me
+      - SELECT * FROM recommendation WHERE user_id IN me

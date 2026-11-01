@@ -1,0 +1,23 @@
+{
+  "name": "@recommendship/schema",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./pg": "./src/pg.ts",
+    "./validate": "./src/validate.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.4",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "4.0.1"
+  }
+}

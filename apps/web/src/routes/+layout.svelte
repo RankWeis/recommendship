@@ -1,0 +1,257 @@
+<script lang="ts">
+	import '../app.css';
+	import { page } from '$app/state';
+	import QuickAdd from '#lib/components/QuickAdd.svelte';
+	import RateSheet from '#lib/components/RateSheet.svelte';
+	import Toasts from '#lib/components/Toasts.svelte';
+	import { initDb, releaseDb } from '#lib/db/index.ts';
+	import { startAutoRecompute } from '#lib/scoring.ts';
+	import { account, startSync } from '#lib/sync.svelte.ts';
+	import { ui } from '#lib/ui.svelte.ts';
+	import { onMount, type Snippet } from 'svelte';
+
+	let { children }: { children: Snippet } = $props();
+
+	let status = $state<'opening' | 'ready' | 'failed'>('opening');
+	let error = $state('');
+	/** Opening normally takes well under a second; past this, say what to do. */
+	let slow = $state(false);
+
+	onMount(() => {
+		if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
+			navigator.serviceWorker.register('/service-worker.js').catch((e) => console.warn('service worker', e));
+		}
+
+		const stops: (() => void)[] = [];
+		const slowTimer = setTimeout(() => (slow = true), 8_000);
+		stops.push(() => clearTimeout(slowTimer));
+
+		// Only one page can hold the database. Let go of it when this page goes away (a
+		// redirect, or iOS keeping it in the background), and start fresh if it comes back.
+		const onHide = () => void releaseDb();
+		const onShow = (e: PageTransitionEvent) => {
+			if (e.persisted) location.reload();
+		};
+		addEventListener('pagehide', onHide);
+		addEventListener('pageshow', onShow);
+		stops.push(() => {
+			removeEventListener('pagehide', onHide);
+			removeEventListener('pageshow', onShow);
+		});
+
+		initDb()
+			.then(() => {
+				stops.push(startAutoRecompute());
+				status = 'ready';
+				// Never blocks the UI: the app works offline and signed out.
+				void startSync().then((stop) => stops.push(stop));
+			})
+			.catch((e) => {
+				console.error(e);
+				error = String(e?.message ?? e);
+				status = 'failed';
+			});
+		return () => stops.forEach((s) => s());
+	});
+
+	const SYNC_LABEL: Record<string, string> = {
+		local: 'On this device only. Sign in to sync',
+		pending: 'Waiting for an invite',
+		offline: 'Offline, changes will upload later',
+		syncing: 'Syncing',
+		synced: 'Synced',
+		error: 'Sync problem, retrying'
+	};
+
+	const tabs = [
+		{ href: '/', label: 'Put List' },
+		{ href: '/tried', label: 'Tried' },
+		{ href: '/recommenders', label: 'People' }
+	];
+	const isActive = (href: string) => (href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href));
+
+	function onkeydown(e: KeyboardEvent) {
+		// "n" anywhere (outside a text field) opens Quick Add.
+		const t = e.target as HTMLElement;
+		if (e.key === 'n' && !e.metaKey && !e.ctrlKey && !t.closest('input, textarea, select, [contenteditable]')) {
+			e.preventDefault();
+			ui.quickAddOpen = true;
+		}
+	}
+</script>
+
+<svelte:window {onkeydown} />
+
+<header>
+	<div class="bar">
+		<a class="brand" href="/">Recommend<span>ship</span></a>
+		<nav aria-label="Main">
+			{#each tabs as t (t.href)}
+				<a href={t.href} class:active={isActive(t.href)} aria-current={isActive(t.href) ? 'page' : undefined}>{t.label}</a>
+			{/each}
+			<a
+				href="/account"
+				class="sync"
+				class:active={isActive('/account')}
+				title={SYNC_LABEL[account.sync] + (account.queued ? ` · ${account.queued} to upload` : '')}
+				aria-label="Account and sync: {SYNC_LABEL[account.sync]}"
+			>
+				<span class="dot {account.sync}"></span>
+			</a>
+		</nav>
+	</div>
+</header>
+
+{#if status === 'ready'}
+	{@render children()}
+	<button class="fab" onclick={() => (ui.quickAddOpen = true)} aria-label="Add a recommendation" title="Add (n)">＋</button>
+	<QuickAdd />
+	<RateSheet />
+{:else if status === 'failed'}
+	<main class="page empty">
+		<h2>Couldn't open the on-device database</h2>
+		<p>{error}</p>
+		<p class="small">Recommendship stores everything in your browser (OPFS). Private windows and some older browsers block it.</p>
+	</main>
+{:else}
+	<main class="page empty" aria-busy="true">
+		{#if slow}
+			<h2>Still opening…</h2>
+			<p>Recommendship may be open somewhere else (another tab or window), which keeps this one waiting.</p>
+			<p class="small">Close it there and reload. On a phone's home-screen app, swipe the app away and open it again.</p>
+			<button class="btn primary" onclick={() => location.reload()}>Reload</button>
+		{:else}
+			Opening…
+		{/if}
+	</main>
+{/if}
+
+<Toasts />
+
+<style>
+	header {
+		position: sticky;
+		top: 0;
+		z-index: 30;
+		background: color-mix(in srgb, var(--bg) 88%, transparent);
+		backdrop-filter: blur(10px);
+		border-bottom: 1px solid var(--line);
+		padding-top: env(safe-area-inset-top, 0px);
+	}
+
+	.bar {
+		max-width: 680px;
+		margin: 0 auto;
+		padding: 0.6rem 16px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.brand {
+		font-weight: 800;
+		font-size: 1.15rem;
+		letter-spacing: -0.02em;
+		text-decoration: none;
+	}
+
+	.brand span {
+		color: var(--accent);
+	}
+
+	nav {
+		display: flex;
+		gap: 0.25rem;
+	}
+
+	nav a {
+		white-space: nowrap;
+		text-decoration: none;
+		padding: 0.35rem 0.7rem;
+		border-radius: 999px;
+		font-weight: 600;
+		font-size: 0.92rem;
+		color: var(--muted);
+	}
+
+	nav a.active {
+		background: var(--surface-2);
+		color: var(--text);
+	}
+
+	nav a.sync {
+		display: grid;
+		place-items: center;
+		width: 2rem;
+		padding: 0.35rem 0;
+	}
+
+	.dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		border: 2px solid var(--muted);
+	}
+
+	.dot.synced {
+		background: var(--good);
+		border-color: var(--good);
+	}
+
+	.dot.syncing {
+		background: var(--accent);
+		border-color: var(--accent);
+		animation: pulse 1s ease-in-out infinite alternate;
+	}
+
+	.dot.pending,
+	.dot.offline {
+		border-color: var(--gold);
+	}
+
+	.dot.error {
+		background: var(--bad);
+		border-color: var(--bad);
+	}
+
+	@keyframes pulse {
+		to {
+			opacity: 0.4;
+		}
+	}
+
+	.fab {
+		position: fixed;
+		right: max(16px, calc(50% - 340px + 16px));
+		bottom: calc(20px + var(--safe-bottom));
+		width: 58px;
+		height: 58px;
+		border-radius: 50%;
+		border: none;
+		background: var(--accent);
+		color: var(--accent-ink);
+		font-size: 1.8rem;
+		box-shadow: var(--shadow);
+		z-index: 35;
+	}
+
+	@media (max-width: 420px) {
+		.bar {
+			gap: 0.5rem;
+		}
+
+		.brand {
+			font-size: 1rem;
+		}
+
+		nav {
+			gap: 0;
+		}
+
+		nav a {
+			padding: 0.35rem 0.45rem;
+			font-size: 0.88rem;
+		}
+	}
+</style>

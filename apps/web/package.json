@@ -1,0 +1,36 @@
+{
+  "name": "web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#lib/*": "./src/lib/*"
+  },
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "4.0.1",
+    "@sveltejs/kit": "3.1.1",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "svelte": "5.57.3",
+    "svelte-check": "^4.7.7",
+    "typescript": "5.9.3",
+    "vite": "8.3.5",
+    "vitest": "4.0.1"
+  },
+  "dependencies": {
+    "@journeyapps/wa-sqlite": "2.0.7",
+    "@powersync/drizzle-driver": "0.8.0",
+    "@powersync/web": "2.5.0",
+    "@recommendship/schema": "workspace:*",
+    "@recommendship/score": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "uuid": "14.0.3",
+    "zod": "4.6.7"
+  }
+}

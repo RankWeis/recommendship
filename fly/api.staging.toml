@@ -1,0 +1,45 @@
+# The API + PWA. Deploy from the repo root: fly deploy --config fly/api.staging.toml
+# Secrets (fly secrets set): DATABASE_URL, BETTER_AUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ADMIN_EMAILS
+app = "recommendship-staging-api"
+primary_region = "sjc"
+
+[build]
+  dockerfile = "../Dockerfile"
+
+# Migrations run once per deploy in a temporary machine, before the new version starts,
+# so a machine waking from scale-to-zero only has to start the server.
+[deploy]
+  release_command = "node --import tsx src/migrate.ts"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+  BETTER_AUTH_URL = "https://recommendship-staging-api.fly.dev"
+  POWERSYNC_URL = "https://recommendship-staging-sync.fly.dev"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Scale to zero when idle; the PWA keeps working offline meanwhile.
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  # Kept warm like production: PowerSync fetches this app's JWKS with a 3 s timeout,
+  # and a cold start takes longer, so a sleeping API made the first sync fail.
+  min_machines_running = 1
+  # Overload queues and sheds requests instead of starting more machines,
+  # so the bill is bounded by the machine count.
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 150
+    hard_limit = 200
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "30s"
+    method = "GET"
+    path = "/healthz"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

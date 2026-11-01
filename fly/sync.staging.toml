@@ -1,0 +1,39 @@
+# PowerSync. Deploy from the repo root: fly deploy --config fly/sync.staging.toml
+# Secrets (fly secrets set): PS_SOURCE_DB_URI, PS_STORAGE_DB_URI
+app = "recommendship-staging-sync"
+primary_region = "sjc"
+
+[build]
+  dockerfile = "../docker/powersync/Dockerfile"
+
+[env]
+  PS_PORT = "8080"
+  PS_SSLMODE = "verify-full"
+  PS_JWKS_URI = "https://recommendship-staging-api.fly.dev/api/auth/jwks"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Scale to zero: stops when no device is connected and starts on the next
+  # sync request, picking up replication where it left off. While it's stopped,
+  # Neon's compute can sleep too. A daily keep-alive (.github/workflows/keepalive.yml)
+  # wakes it so Neon doesn't drop the idle replication slot (after ~40 hours).
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  [http_service.concurrency]
+    type = "connections"
+    soft_limit = 400
+    hard_limit = 500
+
+[checks]
+  [checks.alive]
+    type = "tcp"
+    port = 8080
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "30s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"

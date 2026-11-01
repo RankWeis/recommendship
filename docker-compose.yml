@@ -1,0 +1,66 @@
+# Local stack. Day to day:
+#   docker compose up -d        Postgres + PowerSync
+#   pnpm dev                    API on :3000 and the web app on :5173 (proxying /api)
+#
+# To run the production API container instead of `pnpm dev` (the same image Fly runs):
+#   PS_JWKS_URI=http://api:8080/api/auth/jwks docker compose --profile full up --build
+# then open http://localhost:8081.
+
+name: recommendship
+
+services:
+  db:
+    image: postgres:17.6-alpine
+    command: ['postgres', '-c', 'wal_level=logical']
+    environment:
+      POSTGRES_USER: recommendship
+      POSTGRES_PASSWORD: recommendship
+      POSTGRES_DB: recommendship
+    ports: ['54322:5432']
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U recommendship']
+      interval: 2s
+      timeout: 5s
+      retries: 20
+
+  powersync:
+    image: journeyapps/powersync-service:1.27.0
+    command: ['start', '-r', 'unified']
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      POWERSYNC_CONFIG_PATH: /config/service.yaml
+      NODE_OPTIONS: --max-old-space-size=1000
+      PS_PORT: '8080'
+      PS_SSLMODE: disable
+      PS_SOURCE_DB_URI: postgresql://powersync_role:powersync@db:5432/recommendship
+      PS_STORAGE_DB_URI: postgresql://powersync_storage_user:powersync@db:5432/powersync_storage
+      # The API's JWKS. By default the API runs on the host via `pnpm dev`.
+      PS_JWKS_URI: ${PS_JWKS_URI:-http://host.docker.internal:3000/api/auth/jwks}
+    extra_hosts: ['host.docker.internal:host-gateway']
+    volumes: ['./docker/powersync:/config:ro']
+    ports: ['8080:8080']
+    restart: unless-stopped
+
+  api:
+    profiles: [full]
+    build: .
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      MIGRATE_ON_BOOT: 'true'
+      DATABASE_URL: postgresql://recommendship:recommendship@db:5432/recommendship
+      BETTER_AUTH_SECRET: local-only-secret-change-me-0123456789abcdef
+      BETTER_AUTH_URL: http://localhost:8081
+      POWERSYNC_URL: http://localhost:8080
+      ADMIN_EMAILS: dev@recommendship.test
+      # NODE_ENV=production refuses DEV_LOGIN, so this container signs in with Google only.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    ports: ['8081:8080']
+
+volumes:
+  pg_data:

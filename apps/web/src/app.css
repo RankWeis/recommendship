@@ -1,0 +1,218 @@
+:root {
+	--bg: #f7f5f0;
+	--surface: #ffffff;
+	--surface-2: #efece4;
+	--text: #1d1d1b;
+	--muted: #6b6a64;
+	--line: #e2ded3;
+	--accent: #1f6f5c;
+	--accent-ink: #ffffff;
+	--accent-soft: #dcefe8;
+	--gold: #d99a1e;
+	--good: #2e7d4f;
+	--bad: #b4442f;
+	--shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 4px 16px rgb(0 0 0 / 6%);
+	--radius: 14px;
+	--safe-bottom: env(safe-area-inset-bottom, 0px);
+	color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #141513;
+		--surface: #1d1f1c;
+		--surface-2: #262925;
+		--text: #ecebe6;
+		--muted: #9c9b94;
+		--line: #32352f;
+		--accent: #5cc4a6;
+		--accent-ink: #0d1f1a;
+		--accent-soft: #1f3a32;
+		--gold: #f2b84b;
+		--good: #6bcf94;
+		--bad: #ef8a73;
+		--shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 16px rgb(0 0 0 / 30%);
+		color-scheme: dark;
+	}
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--text);
+	font: 16px/1.45 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-webkit-tap-highlight-color: transparent;
+}
+
+a {
+	color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+	font: inherit;
+	color: inherit;
+}
+
+button {
+	cursor: pointer;
+}
+
+h1,
+h2,
+h3 {
+	line-height: 1.2;
+	margin: 0;
+}
+
+.muted {
+	color: var(--muted);
+}
+
+.small {
+	font-size: 0.85rem;
+}
+
+.num {
+	font-variant-numeric: tabular-nums;
+}
+
+.btn {
+	border: 1px solid var(--line);
+	background: var(--surface);
+	border-radius: 999px;
+	padding: 0.5rem 1rem;
+	font-weight: 600;
+}
+
+.btn.primary {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--accent-ink);
+}
+
+.btn:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.btn.ghost {
+	background: transparent;
+	border-color: transparent;
+}
+
+.field {
+	width: 100%;
+	border: 1px solid var(--line);
+	background: var(--surface);
+	border-radius: 10px;
+	padding: 0.7rem 0.8rem;
+	outline: none;
+}
+
+.field:focus {
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	border: 1px solid var(--line);
+	background: var(--surface);
+	border-radius: 999px;
+	padding: 0.3rem 0.75rem;
+	font-size: 0.9rem;
+	white-space: nowrap;
+}
+
+.chip[aria-pressed='true'],
+.chip.active {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--accent-ink);
+}
+
+.card {
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+}
+
+.page {
+	max-width: 680px;
+	margin: 0 auto;
+	padding: 0 16px calc(96px + var(--safe-bottom));
+}
+
+.section-title {
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--muted);
+	margin: 1.5rem 0 0.5rem;
+}
+
+table.data {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.92rem;
+}
+
+table.data th {
+	text-align: left;
+	font-weight: 600;
+	color: var(--muted);
+	font-size: 0.78rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	padding: 0.4rem 0.5rem;
+	border-bottom: 1px solid var(--line);
+}
+
+table.data td {
+	padding: 0.55rem 0.5rem;
+	border-bottom: 1px solid var(--line);
+}
+
+table.data td.r,
+table.data th.r {
+	text-align: right;
+}
+
+.pos {
+	color: var(--good);
+}
+
+.neg {
+	color: var(--bad);
+}
+
+.empty {
+	text-align: center;
+	padding: 3rem 1rem;
+	color: var(--muted);
+}
+
+/* Wording that depends on how you're using it: swipe on touch screens, the ✓ and ✕
+   buttons with a mouse (ItemRow shows one or the other by the same rule). */
+@media (hover: none) {
+	.on-mouse {
+		display: none;
+	}
+}
+
+@media (hover: hover) {
+	.on-touch {
+		display: none;
+	}
+}

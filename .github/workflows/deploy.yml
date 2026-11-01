@@ -1,0 +1,45 @@
+name: Deploy
+
+# Every push to main: CI, then staging, then a smoke test against staging.
+# Production: run this workflow by hand ("Run workflow" in the Actions tab). The
+# `production` environment only accepts the main branch.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Where to deploy
+        type: choice
+        options: [production, staging]
+        default: production
+
+concurrency:
+  group: deploy-${{ github.event.inputs.target || 'staging' }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    # Off until the one-time Fly/Neon setup is done (docs/deploy.md); then set the
+    # repository variable DEPLOY_ENABLED=true.
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.target || 'staging' }}
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      SUFFIX: ${{ (github.event.inputs.target || 'staging') == 'staging' && '.staging' || '' }}
+      PREFIX: ${{ (github.event.inputs.target || 'staging') == 'staging' && 'recommendship-staging' || 'recommendship' }}
+      SITE: ${{ (github.event.inputs.target || 'staging') == 'staging' && 'https://recommendship-staging-api.fly.dev' || 'https://recommendship.app' }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: superfly/flyctl-actions/setup-flyctl@1.5
+      # API first: it runs the migrations PowerSync's sync config depends on.
+      # --ha=false: one machine per app (Fly defaults to two on first deploy).
+      - run: flyctl deploy . --config fly/api$SUFFIX.toml --remote-only --ha=false
+      - run: flyctl deploy . --config fly/sync$SUFFIX.toml --remote-only --ha=false
+      - run: scripts/smoke.sh "$SITE" "https://$PREFIX-sync.fly.dev"

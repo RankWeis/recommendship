@@ -1,0 +1,28 @@
+name: Keep replication alive
+
+# PowerSync scales to zero on Fly. Neon deletes a replication slot that makes no
+# progress for ~40 hours, which would force PowerSync to replicate everything
+# again. Waking each environment once a day keeps its slot current. Each wake
+# costs a few minutes of machine time.
+
+on:
+  schedule:
+    - cron: '17 11 * * *'
+  workflow_dispatch:
+
+jobs:
+  wake:
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sync: [https://recommendship-sync.fly.dev, https://recommendship-staging-sync.fly.dev]
+    steps:
+      - name: Wake PowerSync and let it catch up
+        run: |
+          # The first request starts the machine; give replication time to resume and confirm its position.
+          curl -s -o /dev/null --retry 5 --retry-all-errors --max-time 30 "${{ matrix.sync }}/" || true
+          sleep 90
+          code=$(curl -s -o /dev/null -w '%{http_code}' --retry 3 --retry-all-errors --max-time 30 "${{ matrix.sync }}/")
+          echo "PowerSync answered HTTP $code"
+          [[ "$code" =~ ^[2-4] ]]
