@@ -378,6 +378,7 @@ export function createApp({
 				today: n(sql`count(*) filter (where ${gte(appUser.createdAt, today)})`),
 				last7Days: n(sql`count(*) filter (where ${gte(appUser.createdAt, weekAgo)})`),
 				waiting: n(sql`count(*) filter (where ${appUser.approvedAt} is null and ${suspension.at} is null)`),
+				approved: n(sql`count(${appUser.approvedAt})`),
 				suspended: n(sql`count(${suspension.at})`),
 				nearLimit: n(sql`count(*) filter (where ${nearLimit})`),
 				customLimits: n(sql`count(*) filter (where usage.custom_limits)`),
@@ -391,7 +392,12 @@ export function createApp({
 			.innerJoin(usage, sql`usage.id = ${appUser.id}`);
 		return c.json({
 			...accounts,
-			defaults: { rows: env.ROW_QUOTA, changesPerDay: env.WRITE_OPS_PER_DAY, newAccountsPerDay: env.MAX_NEW_USERS_PER_DAY }
+			defaults: {
+				rows: env.ROW_QUOTA,
+				changesPerDay: env.WRITE_OPS_PER_DAY,
+				newAccountsPerDay: env.MAX_NEW_USERS_PER_DAY,
+				openSignupsUpTo: env.OPEN_SIGNUPS_UP_TO
+			}
 		});
 	});
 

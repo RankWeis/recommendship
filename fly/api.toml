@@ -18,6 +18,10 @@ primary_region = "sjc"
   # (recommendship-api.fly.dev, www) redirect here; /api stays reachable on all of them.
   BETTER_AUTH_URL = "https://recommendship.app"
   POWERSYNC_URL = "https://recommendship-sync.fly.dev"
+  # Open sign-up: approve new accounts automatically until this many are approved, then
+  # they wait for an invite or Approve. With the 10,000-row limits this bounds storage
+  # (~120 MB per full account) at roughly $85/month. Staging stays invite-only.
+  OPEN_SIGNUPS_UP_TO = "2000"
 
 [http_service]
   internal_port = 8080

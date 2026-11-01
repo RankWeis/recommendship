@@ -103,7 +103,7 @@ Machine counts are fixed and `hard_limit` makes overload queue rather than add m
 
 ## Inviting people
 
-Sign-up is invite-only. Emails in `ADMIN_EMAILS` are approved on sign-up and see an **Invites** section on the Account page to create single-use codes. Anyone else can sign in and use the app on their device, but nothing syncs until they redeem a code, or an admin presses **Approve** next to them on the Admin page.
+Sign-up is invite-only unless `OPEN_SIGNUPS_UP_TO` is set (production: 2,000), in which case new accounts are approved automatically until that many are approved, and invites take over after that. Emails in `ADMIN_EMAILS` are approved on sign-up and see an **Invites** section on the Account page to create single-use codes. Anyone else can sign in and use the app on their device, but nothing syncs until they redeem a code, or an admin presses **Approve** next to them on the Admin page.
 
 ## Watching usage
 
@@ -118,3 +118,9 @@ Quick Add suggests the real title as you type (with poster, year and director, a
 3. Deploy. `/api/public/config` then reports `lookup.movie: true`.
 
 The token stays on the server: the app asks `/api/lookup`, which caches answers for a day and allows 60 lookups a minute per account. TMDB's free key is for non-commercial use; if Recommendship ever charges money or shows ads, TMDB wants a commercial agreement. Their credit line is on the Account page.
+
+## Keeping the bill bounded
+
+Worst case, every approved account is full: 10,000 each of items, people and recommendations is about 30,000 rows, roughly 90 MB across the app database and PowerSync's storage (~120 MB with Neon's history). At Neon's $0.35/GB-month that's about $0.04 per full account, so `OPEN_SIGNUPS_UP_TO=2000` caps storage near $85/month. Compute is bounded by the Neon autoscaling maximum (Neon console → compute settings); Fly machine counts are fixed.
+
+PowerSync keeps every change until its storage is compacted. PowerSync Cloud does that daily; self-hosted, the daily workflow (`.github/workflows/keepalive.yml`) runs the image's `compact` command on a one-off machine in each sync app and removes it afterwards. To run it by hand: Actions → Keep replication alive → Run workflow.

@@ -8,7 +8,7 @@ import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app';
-import { signupAllowed, type Auth } from '../src/auth';
+import { openSeat, signupAllowed, type Auth } from '../src/auth';
 import type { Db } from '../src/db';
 import { LookupUnavailable, type Lookup } from '../src/lookup';
 import { loadEnv } from '../src/env';
@@ -287,7 +287,8 @@ describe('monitoring', () => {
 			changesToday: 2,
 			nearLimit: 0,
 			customLimits: 0,
-			defaults: { rows: env.ROW_QUOTA, changesPerDay: env.WRITE_OPS_PER_DAY, newAccountsPerDay: env.MAX_NEW_USERS_PER_DAY }
+			approved: 1,
+			defaults: { rows: env.ROW_QUOTA, changesPerDay: env.WRITE_OPS_PER_DAY, newAccountsPerDay: env.MAX_NEW_USERS_PER_DAY, openSignupsUpTo: 0 }
 		});
 		expect((await call('alice', 'GET', '/api/admin/stats')).status).toBe(403);
 	});
@@ -376,6 +377,20 @@ describe('daily sign-up cap', () => {
 		// Yesterday's sign-ups don't count against today.
 		await db.update(schema.appUser).set({ createdAt: '2026-01-01T00:00:00.000Z' });
 		expect(await signupAllowed(db as unknown as Db, cap(3), 'new@example.com')).toBe(true);
+	});
+});
+
+describe('open sign-up', () => {
+	it('approves new accounts automatically until OPEN_SIGNUPS_UP_TO are approved', async () => {
+		// beforeEach approved one account (the admin).
+		const open = (n: number) => ({ ...env, OPEN_SIGNUPS_UP_TO: n });
+		expect(await openSeat(db as unknown as Db, open(0))).toBe(false);
+		expect(await openSeat(db as unknown as Db, open(2))).toBe(true);
+		await db.update(schema.appUser).set({ approvedAt: new Date().toISOString() }).where(eq(schema.appUser.id, 'alice'));
+		expect(await openSeat(db as unknown as Db, open(2))).toBe(false);
+		// Suspending clears approval, which frees the seat.
+		await call('admin', 'POST', '/api/admin/users/alice/suspend', {});
+		expect(await openSeat(db as unknown as Db, open(2))).toBe(true);
 	});
 });
 

@@ -6,7 +6,7 @@ import { appUser } from '@recommendship/schema/pg';
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { APIError } from 'better-auth/api';
 import { jwt } from 'better-auth/plugins';
-import { count, gte } from 'drizzle-orm';
+import { count, gte, isNotNull } from 'drizzle-orm';
 import type pg from 'pg';
 import type { Db } from './db';
 import type { Env } from './env';
@@ -32,6 +32,17 @@ export async function signupAllowed(db: Db, env: Env, email: string | null | und
 	return (row?.n ?? 0) < env.MAX_NEW_USERS_PER_DAY;
 }
 
+/**
+ * Whether a new sign-up is approved without an invite: open sign-up is on and fewer
+ * than OPEN_SIGNUPS_UP_TO accounts are approved. Invites and admins' Approve still work
+ * past the cap; it only stops automatic approval.
+ */
+export async function openSeat(db: Db, env: Env): Promise<boolean> {
+	if (env.OPEN_SIGNUPS_UP_TO === 0) return false;
+	const [row] = await db.select({ n: count() }).from(appUser).where(isNotNull(appUser.approvedAt));
+	return (row?.n ?? 0) < env.OPEN_SIGNUPS_UP_TO;
+}
+
 export function authOptions(env: Env, pool: pg.Pool, db?: Db) {
 	return {
 		database: pool,
@@ -45,7 +56,16 @@ export function authOptions(env: Env, pool: pg.Pool, db?: Db) {
 				: {},
 		// Production only (Better Auth's own default): locally every request shares one IP, and the
 		// e2e tests sign in several times within seconds.
-		rateLimit: { enabled: env.NODE_ENV === 'production', window: 60, max: 60 },
+		//
+		// Limits are per network address, and many phones share one (carrier NAT, a room on
+		// the same Wi-Fi), so they're looser than Better Auth's defaults (60 a minute, and
+		// 3 sign-ins per 10 s). Google itself guards the sign-in; email sign-in is off here.
+		rateLimit: {
+			enabled: env.NODE_ENV === 'production',
+			window: 60,
+			max: 300,
+			customRules: { '/sign-in/social': { window: 10, max: 30 } }
+		},
 		// Rate limits are per client IP. Behind Fly's proxy the socket address is the proxy's,
 		// so read Fly-Client-IP, which the proxy sets itself (unlike X-Forwarded-For).
 		advanced: { ipAddress: { ipAddressHeaders: ['fly-client-ip'] } },
@@ -76,7 +96,7 @@ export function authOptions(env: Env, pool: pg.Pool, db?: Db) {
 					after: async (user) => {
 						if (!db) return;
 						const now = new Date().toISOString();
-						const approved = env.AUTO_APPROVE || isAdmin(env, user.email);
+						const approved = env.AUTO_APPROVE || isAdmin(env, user.email) || (await openSeat(db, env));
 						await db
 							.insert(appUser)
 							.values({ id: user.id, email: user.email, displayName: user.name, createdAt: now, approvedAt: approved ? now : null })
