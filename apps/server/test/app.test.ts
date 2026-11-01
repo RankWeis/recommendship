@@ -8,7 +8,7 @@ import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app';
-import { openSeat, signupAllowed, type Auth } from '../src/auth';
+import { authOptions, openSeat, signupAllowed, type Auth } from '../src/auth';
 import type { Db } from '../src/db';
 import { LookupUnavailable, type Lookup } from '../src/lookup';
 import { loadEnv } from '../src/env';
@@ -423,5 +423,20 @@ describe('canonical address', () => {
 describe('env', () => {
 	it('refuses dev shortcuts in production', () => {
 		expect(() => loadEnv({ ...process.env, NODE_ENV: 'production', DATABASE_URL: 'x', BETTER_AUTH_SECRET: 'x'.repeat(32), BETTER_AUTH_URL: 'https://a.b', POWERSYNC_URL: 'https://c.d', DEV_LOGIN: 'true' })).toThrow(/production/);
+	});
+});
+
+describe('what sign-in keeps', () => {
+	it("drops Google's profile picture link and ID token", async () => {
+		const hooks = authOptions(env, {} as never, db as unknown as Db).databaseHooks;
+		const now = new Date();
+		const user = await hooks.user.create.before(
+			{ id: 'carol', email: 'carol@example.com', name: 'Carol', image: 'https://lh3.googleusercontent.com/a/pic', emailVerified: true, createdAt: now, updatedAt: now }
+		);
+		expect(user).toMatchObject({ data: { email: 'carol@example.com', name: 'Carol', image: null } });
+
+		const account = { id: 'a1', userId: 'carol', providerId: 'google', accountId: '123', accessToken: 'at', idToken: 'eyJ.profile.sig', createdAt: now, updatedAt: now };
+		expect(await hooks.account.create.before(account as never)).toMatchObject({ data: { accessToken: 'at', idToken: null } });
+		expect(await hooks.account.update.before({ idToken: 'eyJ.profile.sig' } as never)).toMatchObject({ data: { idToken: null } });
 	});
 });

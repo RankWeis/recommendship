@@ -13,7 +13,7 @@
 	<h2>What's stored</h2>
 	<h3>When you sign in with Google</h3>
 	<ul>
-		<li>Your name, email address, profile picture link and Google account ID, from Google.</li>
+		<li>Your name, email address and Google account ID, from Google.</li>
 		<li>The sign-in tokens Google issues, used only to sign you in.</li>
 		<li>For each signed-in session: when it started, the network (IP) address and the browser it came from.</li>
 	</ul>
