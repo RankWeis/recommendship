@@ -37,6 +37,8 @@ export interface ListItemRow extends ItemRow {
 	explanation: string | null;
 	recommender_ids: string;
 	recommender_names: string;
+	/** How hyped each of them was (1–3 or null), in the same order as recommender_ids. */
+	recommender_enthusiasm: string;
 }
 
 export interface RecommenderRow {
@@ -73,14 +75,16 @@ export const LIST_ITEM_COLUMNS = `
 	i.id, i.category_id, i.title, i.year, i.creator, i.image_url, i.external_source, i.external_id, i.status, i.rating, i.review, i.added_at, i.tried_at,
 	p.predicted, p.confidence, p.lower_bound, p.explanation,
 	coalesce(g.recommender_ids, '[]') AS recommender_ids,
-	coalesce(g.recommender_names, '[]') AS recommender_names`;
+	coalesce(g.recommender_names, '[]') AS recommender_names,
+	coalesce(g.recommender_enthusiasm, '[]') AS recommender_enthusiasm`;
 
 // Who recommended each item, gathered in one pass over recommendations and joined on,
 // rather than looked up again for every row (seconds, with a couple of thousand items).
 export const LIST_ITEM_FROM = `item i
 	LEFT JOIN item_prediction p ON p.id = i.id
 	LEFT JOIN (
-		SELECT rc.item_id, json_group_array(rc.recommender_id) AS recommender_ids, json_group_array(r.name) AS recommender_names
+		SELECT rc.item_id, json_group_array(rc.recommender_id) AS recommender_ids, json_group_array(r.name) AS recommender_names,
+			json_group_array(rc.enthusiasm) AS recommender_enthusiasm
 		FROM recommendation rc JOIN recommender r ON r.id = rc.recommender_id
 		GROUP BY rc.item_id
 	) g ON g.item_id = i.id`;

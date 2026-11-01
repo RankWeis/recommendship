@@ -4,7 +4,7 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import { useCategories } from '#lib/categories.svelte.ts';
 	import { liveQuery } from '#lib/db/live.svelte.ts';
-	import { LIST_ITEM_COLUMNS, LIST_ITEM_FROM, type ListItemRow } from '#lib/db/rows.ts';
+	import { LIST_ITEM_COLUMNS, LIST_ITEM_FROM, parseJson, type ListItemRow } from '#lib/db/rows.ts';
 	import { usePeople } from '#lib/people.svelte.ts';
 	import { loadSampleData } from '#lib/sample.ts';
 	import { ui } from '#lib/ui.svelte.ts';
@@ -30,13 +30,51 @@
 		sql: `SELECT ${LIST_ITEM_COLUMNS} FROM ${LIST_ITEM_FROM} WHERE i.status = 'TO_TRY' ORDER BY ${SORTS[sort].order}`
 	}));
 
+	// Filters: who recommended it, and how hyped they were. Both must hold for the same
+	// person ("Sam said you MUST"), so they apply to each recommendation, not the item.
+	const HYPE = [
+		{ value: '', label: 'Any hype' },
+		{ value: '3', label: '★★★ MUST' },
+		{ value: '2', label: '★★ should' },
+		{ value: '1', label: '★ might like' },
+		{ value: 'none', label: 'No hype' }
+	] as const;
+	let person = $state('');
+	let hype = $state<(typeof HYPE)[number]['value']>('');
+	const filtering = $derived(!!person || !!hype);
+
+	const withRecs = $derived(
+		list.rows.map((item) => {
+			const ids = parseJson<string[]>(item.recommender_ids, []);
+			const levels = parseJson<(number | null)[]>(item.recommender_enthusiasm, []);
+			return { item, recs: ids.map((id, k) => ({ id, level: levels[k] ?? null })) };
+		})
+	);
+	const hypeMatches = (level: number | null) => !hype || (hype === 'none' ? level == null : level === Number(hype));
+	const filtered = $derived(
+		filtering
+			? withRecs.filter(({ recs }) => recs.some((r) => (!person || r.id === person) && hypeMatches(r.level))).map(({ item }) => item)
+			: list.rows
+	);
+	// People with something on the Put List, most first.
+	const personOptions = $derived.by(() => {
+		const n = new Map<string, number>();
+		for (const { recs } of withRecs) for (const r of recs) n.set(r.id, (n.get(r.id) ?? 0) + 1);
+		return [...n].sort((a, b) => b[1] - a[1] || people.nameOf(a[0]).localeCompare(people.nameOf(b[0])));
+	});
+
 	const counts = $derived.by(() => {
 		const m = new Map<string, number>();
-		for (const i of list.rows) m.set(i.category_id, (m.get(i.category_id) ?? 0) + 1);
+		for (const i of filtered) m.set(i.category_id, (m.get(i.category_id) ?? 0) + 1);
 		return m;
 	});
 	const tabs = $derived(categories.all.filter((c) => counts.has(c.id)));
-	const shown = $derived(tab === 'all' ? list.rows : list.rows.filter((i) => i.category_id === tab));
+	const shown = $derived(tab === 'all' ? filtered : filtered.filter((i) => i.category_id === tab));
+
+	// A filter can empty the chosen type's tab; fall back to All rather than show nothing.
+	$effect(() => {
+		if (tab !== 'all' && !counts.has(tab)) tab = 'all';
+	});
 
 	async function sample() {
 		loadingSample = true;
@@ -66,13 +104,29 @@
 		<div class="toolbar">
 			<div class="tabs" role="tablist" aria-label="Category">
 				<button class="chip" role="tab" aria-selected={tab === 'all'} class:active={tab === 'all'} onclick={() => (tab = 'all')}>
-					All <span class="count">{list.rows.length}</span>
+					All <span class="count">{filtered.length}</span>
 				</button>
 				{#each tabs as c (c.id)}
 					<button class="chip" role="tab" aria-selected={tab === c.id} class:active={tab === c.id} onclick={() => (tab = c.id)}>
 						<span aria-hidden="true">{c.icon}</span>{c.name} <span class="count">{counts.get(c.id)}</span>
 					</button>
 				{/each}
+			</div>
+			<div class="filters">
+				<select bind:value={person} aria-label="Recommended by" class:on={!!person}>
+					<option value="">Anyone</option>
+					{#each personOptions as [id, n] (id)}
+						<option value={id}>{people.nameOf(id)} ({n})</option>
+					{/each}
+				</select>
+				<select bind:value={hype} aria-label="How hyped" class:on={!!hype}>
+					{#each HYPE as h (h.value)}
+						<option value={h.value}>{h.label}</option>
+					{/each}
+				</select>
+				{#if filtering}
+					<button class="btn ghost small" onclick={() => ((person = ''), (hype = ''))}>Clear</button>
+				{/if}
 			</div>
 			<div class="tools">
 				<button class="btn ghost small" aria-pressed={selecting} onclick={() => ((selecting = !selecting), selected.clear())}
@@ -89,6 +143,11 @@
 			</div>
 		</div>
 
+		{#if filtering && !shown.length}
+			<p class="empty small">
+				Nothing on the Put List matches. <button class="link-btn" onclick={() => ((person = ''), (hype = ''))}>Clear the filters</button>
+			</p>
+		{/if}
 		<ul class="list">
 			{#each shown as item (item.id)}
 				<ItemRow
@@ -132,6 +191,29 @@
 	.count {
 		opacity: 0.65;
 		font-variant-numeric: tabular-nums;
+	}
+
+	.filters {
+		display: flex;
+		gap: 0.4rem;
+		align-items: center;
+	}
+
+	.filters select {
+		flex: 1 1 0;
+		min-width: 0;
+		border: 1px solid var(--line);
+		background: var(--surface);
+		border-radius: 999px;
+		padding: 0.35rem 0.7rem;
+		font: inherit;
+		font-size: 0.9rem;
+		color: inherit;
+	}
+
+	.filters select.on {
+		border-color: var(--accent);
+		background: var(--accent-soft);
 	}
 
 	.tools {
