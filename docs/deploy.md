@@ -119,6 +119,19 @@ Quick Add suggests the real title as you type (with poster, year and director, a
 
 The token stays on the server: the app asks `/api/lookup`, which caches answers for a day and allows 60 lookups a minute per account. TMDB's free key is for non-commercial use; if Recommendship ever charges money or shows ads, TMDB wants a commercial agreement. Their credit line is on the Account page.
 
+## How many people at once
+
+Each phone or browser with the app open holds one connection to PowerSync. PowerSync's default cap is 200 per instance; `docker/powersync/service.yaml` raises it to 2,000, and Fly's proxy limit in `fly/sync*.toml` matches.
+
+Load test (1 November 2026), PowerSync 1.27 in a container capped like the Fly machine (1 GB, 1 CPU), 200 accounts with a little data, connections arriving 50 a second:
+
+| open connections | ready | memory | first sync, 95th percentile |
+|---|---|---|---|
+| 250 | all | ~170 MB | 97 ms |
+| 1,000 | all | ~250 MB | 69 ms |
+| 2,000 | all but 2 | ~320 MB | 76 ms |
+
+The connections were idle; lots of people editing at once costs CPU, and Fly's shared CPU is slower under sustained load than this test's full core. Past ~2,000 at once, the next step is splitting PowerSync into one replication machine and several API machines (its all-in-one mode can only run once).
 ## Keeping the bill bounded
 
 Worst case, every approved account is full: 10,000 each of items, people and recommendations is about 30,000 rows, roughly 90 MB across the app database and PowerSync's storage (~120 MB with Neon's history). At Neon's $0.35/GB-month that's about $0.04 per full account, so `OPEN_SIGNUPS_UP_TO=2000` caps storage near $85/month. Compute is bounded by the Neon autoscaling maximum (Neon console → compute settings); Fly machine counts are fixed.

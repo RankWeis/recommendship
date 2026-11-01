@@ -25,6 +25,17 @@ client_auth:
   jwks_uri: !env PS_JWKS_URI
   audience: ['recommendship']
 
+# The default is 200 open connections per instance; every phone with the app open holds
+# one. A load test at Fly's size (1 GB, shared CPU) is in docs/deploy.md.
+api:
+  parameters:
+    max_concurrent_connections: 2000
+
+# Don't send PowerSync usage statistics anywhere (the privacy page says nothing leaves
+# except what it lists).
+telemetry:
+  disable_telemetry_sharing: true
+
 system:
   logging:
     level: info
