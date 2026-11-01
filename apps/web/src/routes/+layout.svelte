@@ -162,7 +162,7 @@
 	.bar {
 		max-width: 680px;
 		margin: 0 auto;
-		padding: 0.6rem 16px;
+		padding: 0.6rem max(16px, env(safe-area-inset-right, 0px)) 0.6rem max(16px, env(safe-area-inset-left, 0px));
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -282,7 +282,8 @@
 		z-index: 35;
 	}
 
-	@media (max-width: 420px) {
+	/* Phones, Pro Max sizes (430–440 px) included: the full-size header needs about 460 px. */
+	@media (max-width: 480px) {
 		.bar {
 			gap: 0.5rem;
 		}
