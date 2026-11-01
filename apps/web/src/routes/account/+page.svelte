@@ -341,6 +341,7 @@
 		Movie and TV details and posters from <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>. This product uses the
 		TMDB API but is not endorsed or certified by TMDB. Book details and covers from
 		<a href="https://openlibrary.org" target="_blank" rel="noopener">Open Library</a>.
+		<br /><a href="/about">About</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a>
 	</footer>
 </main>
 

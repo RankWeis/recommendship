@@ -68,6 +68,11 @@
 		{ href: '/tried', label: 'Tried' },
 		{ href: '/recommenders', label: 'People' }
 	];
+	// Plain pages that don't need the on-device database, so they show even where it can't
+	// open (a private window) or while it's opening; Google's reviewers link to them.
+	const INFO_PAGES = ['/about', '/privacy', '/terms'];
+	const infoPage = $derived(INFO_PAGES.includes(page.url.pathname));
+
 	const isActive = (href: string) => (href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href));
 
 	function onkeydown(e: KeyboardEvent) {
@@ -102,7 +107,9 @@
 	</div>
 </header>
 
-{#if status === 'ready'}
+{#if infoPage}
+	{@render children()}
+{:else if status === 'ready'}
 	{@render children()}
 	<button class="fab" onclick={() => (ui.quickAddOpen = true)} aria-label="Add a recommendation" title="Add (n)">＋</button>
 	<QuickAdd />

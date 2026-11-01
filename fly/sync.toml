@@ -23,8 +23,11 @@ primary_region = "sjc"
   min_machines_running = 0
   [http_service.concurrency]
     type = "connections"
-    soft_limit = 400
-    hard_limit = 500
+    # Every open app holds one connection. Load-tested locally at this machine's size: 2,000
+    # connections took ~320 MB and first syncs stayed under 0.1 s (docs/deploy.md).
+    # PowerSync's own cap (max_concurrent_connections in service.yaml) matches.
+    soft_limit = 1500
+    hard_limit = 2000
 
 [checks]
   [checks.alive]

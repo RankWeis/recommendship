@@ -216,3 +216,43 @@ table.data th.r {
 		display: none;
 	}
 }
+
+/* Long-form pages (About, Privacy, Terms). */
+.prose {
+	line-height: 1.6;
+	padding-top: 1rem;
+}
+
+.prose h1 {
+	font-size: 1.6rem;
+	line-height: 1.25;
+	margin: 0.5rem 0 1rem;
+}
+
+.prose h2 {
+	font-size: 1.15rem;
+	margin: 2rem 0 0.5rem;
+}
+
+.prose h3 {
+	font-size: 1rem;
+	margin: 1.2rem 0 0.3rem;
+}
+
+.prose p,
+.prose li {
+	max-width: 62ch;
+}
+
+.prose ul,
+.prose ol {
+	padding-left: 1.3rem;
+}
+
+.prose li {
+	margin: 0.35rem 0;
+}
+
+.prose a:not(.btn) {
+	color: var(--accent);
+}
