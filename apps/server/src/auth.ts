@@ -84,12 +84,20 @@ export function authOptions(env: Env, pool: pg.Pool, db?: Db) {
 			})
 		],
 		databaseHooks: {
+			// Google's ID token repeats the profile (name, email, picture) and nothing uses it
+			// after sign-in, so it isn't kept.
+			account: {
+				create: { before: async (account) => ({ data: { ...account, idToken: null } }) },
+				update: { before: async (account) => ({ data: { ...account, idToken: null } }) }
+			},
 			user: {
 				create: {
 					before: async (user) => {
 						if (db && !(await signupAllowed(db, env, user.email))) {
 							throw new APIError('FORBIDDEN', { message: SIGNUPS_FULL });
 						}
+						// The app never shows a profile picture, so don't keep Google's link to one.
+						return { data: { ...user, image: null } };
 					},
 					// Every account gets a profile row. Admins (and everyone, in local dev) start approved;
 					// everyone else waits for an invite code.

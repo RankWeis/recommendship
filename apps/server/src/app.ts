@@ -145,7 +145,7 @@ export function createApp({
 	app.get('/api/me', async (c) => {
 		const { user } = c.get('session');
 		return c.json({
-			user: { id: user.id, email: user.email, name: user.name, image: user.image ?? null },
+			user: { id: user.id, email: user.email, name: user.name },
 			approved: c.get('approved'),
 			suspended: c.get('suspended'),
 			admin: admin(c),

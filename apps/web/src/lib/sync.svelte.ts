@@ -8,7 +8,7 @@ import { db, releaseDb } from './db';
 import { toast } from './toast.svelte';
 
 export interface Me {
-	user: { id: string; email: string; name: string; image: string | null };
+	user: { id: string; email: string; name: string };
 	approved: boolean;
 	suspended: boolean;
 	admin: boolean;

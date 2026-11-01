@@ -15,6 +15,9 @@ export async function runMigrations() {
 		await migrate(db, { migrationsFolder: fileURLToPath(new URL('../drizzle', import.meta.url)) });
 		const { runMigrations: runAuth } = await getMigrations(authOptions(env, pool));
 		await runAuth();
+		// Accounts made before sign-in stopped keeping these (see auth.ts). Cheap and idempotent.
+		await pool.query(`UPDATE "user" SET image = NULL WHERE image IS NOT NULL`);
+		await pool.query(`UPDATE account SET "idToken" = NULL WHERE "idToken" IS NOT NULL`);
 		console.log('migrations applied');
 	} finally {
 		await pool.end();
