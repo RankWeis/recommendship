@@ -268,3 +268,23 @@ export async function signOut({ discardUnsynced = false } = {}): Promise<{ signe
 	updateStatus();
 	return { signedOut: true, pending: 0 };
 }
+
+/**
+ * Deletes the account and everything in it from the server, then this device's copy.
+ * Queued changes are dropped: they'd only be deleted anyway.
+ */
+export async function deleteAccount(): Promise<void> {
+	const res = await fetch('/api/account', {
+		method: 'DELETE',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify({ confirm: 'DELETE' })
+	});
+	if (!res.ok) {
+		const why = (await res.json().catch(() => ({}))).error;
+		throw new Error(why ? `Couldn't delete your account: ${why}.` : `Couldn't delete your account (HTTP ${res.status}). Check your connection and try again.`);
+	}
+	await db.disconnectAndClear();
+	cacheMe(null);
+	account.me = null;
+	updateStatus();
+}

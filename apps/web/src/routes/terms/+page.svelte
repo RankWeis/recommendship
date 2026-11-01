@@ -22,7 +22,7 @@
 	<h2>Your content</h2>
 	<p>
 		What you log is yours. You let Recommendship store it, sync it between your devices and use it to make your predictions, only to run the
-		service for you. You can download it or ask for it to be deleted at any time (see the <a href="/privacy">privacy policy</a>).
+		service for you. You can download it or delete it, account and all, at any time (see the <a href="/privacy">privacy policy</a>).
 	</p>
 
 	<h2>Fair use</h2>

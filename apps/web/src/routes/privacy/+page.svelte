@@ -68,8 +68,9 @@
 		<li><b>Download:</b> Account → Your data → Download backup (everything) or Download spreadsheet.</li>
 		<li><b>Delete things:</b> any item or person can be deleted in the app, and the deletion syncs.</li>
 		<li>
-			<b>Delete your account:</b> email <a href="mailto:kian.samii@gmail.com">kian.samii@gmail.com</a> from the address you sign in with,
-			and your account and everything in it will be deleted within 30 days. Database backups expire on their own shortly after.
+			<b>Delete your account:</b> Account → Delete account. Your account and everything in it are deleted straight away.
+			Database backups expire on their own shortly after. If you can't sign in any more, email
+			<a href="mailto:kian.samii@gmail.com">kian.samii@gmail.com</a> from the address you sign in with and it will be done within 30 days.
 		</li>
 	</ul>
 	<p>Accounts that are suspended for abuse may be deleted.</p>
