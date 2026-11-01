@@ -261,9 +261,10 @@
 			</div>
 		{:else if !account.me.approved}
 			<div class="card panel">
-				<h2>Recommendship is invite-only for now</h2>
+				<h2>Your account is waiting to be let in</h2>
 				<p class="muted">
-					You can keep using the app; everything stays on this device and uploads once you're in. Have a code?
+					Recommendship is letting people in a few at a time. You can keep using the app meanwhile: everything stays on this device and
+					uploads once you're in. Have an invite code?
 				</p>
 				<form
 					class="row"

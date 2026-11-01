@@ -6,7 +6,7 @@ import { appUser } from '@recommendship/schema/pg';
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { APIError } from 'better-auth/api';
 import { jwt } from 'better-auth/plugins';
-import { count, gte } from 'drizzle-orm';
+import { count, gte, isNotNull } from 'drizzle-orm';
 import type pg from 'pg';
 import type { Db } from './db';
 import type { Env } from './env';
@@ -30,6 +30,17 @@ export async function signupAllowed(db: Db, env: Env, email: string | null | und
 	const today = new Date().toISOString().slice(0, 10);
 	const [row] = await db.select({ n: count() }).from(appUser).where(gte(appUser.createdAt, today));
 	return (row?.n ?? 0) < env.MAX_NEW_USERS_PER_DAY;
+}
+
+/**
+ * Whether a new sign-up is approved without an invite: open sign-up is on and fewer
+ * than OPEN_SIGNUPS_UP_TO accounts are approved. Invites and admins' Approve still work
+ * past the cap; it only stops automatic approval.
+ */
+export async function openSeat(db: Db, env: Env): Promise<boolean> {
+	if (env.OPEN_SIGNUPS_UP_TO === 0) return false;
+	const [row] = await db.select({ n: count() }).from(appUser).where(isNotNull(appUser.approvedAt));
+	return (row?.n ?? 0) < env.OPEN_SIGNUPS_UP_TO;
 }
 
 export function authOptions(env: Env, pool: pg.Pool, db?: Db) {
@@ -76,7 +87,7 @@ export function authOptions(env: Env, pool: pg.Pool, db?: Db) {
 					after: async (user) => {
 						if (!db) return;
 						const now = new Date().toISOString();
-						const approved = env.AUTO_APPROVE || isAdmin(env, user.email);
+						const approved = env.AUTO_APPROVE || isAdmin(env, user.email) || (await openSeat(db, env));
 						await db
 							.insert(appUser)
 							.values({ id: user.id, email: user.email, displayName: user.name, createdAt: now, approvedAt: approved ? now : null })
