@@ -1,7 +1,8 @@
 /** App-wide sheet state, so any screen can open Quick Add or the rating sheet. */
 export const ui = $state({
 	quickAddOpen: false,
-	rateItemId: null as string | null
+	rateItemId: null as string | null,
+	aboutOpen: false
 });
 
 // Per-device conveniences (§5.1). Storage can be unavailable (private mode), so every access is guarded.

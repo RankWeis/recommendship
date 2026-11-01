@@ -1,8 +1,10 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/state';
+	import AboutContent from '#lib/components/AboutContent.svelte';
 	import QuickAdd from '#lib/components/QuickAdd.svelte';
 	import RateSheet from '#lib/components/RateSheet.svelte';
+	import Sheet from '#lib/components/Sheet.svelte';
 	import Toasts from '#lib/components/Toasts.svelte';
 	import { initDb, releaseDb } from '#lib/db/index.ts';
 	import { startAutoRecompute } from '#lib/scoring.ts';
@@ -89,11 +91,16 @@
 
 <header>
 	<div class="bar">
-		<a class="brand" href="/">Recommend<span>ship</span></a>
+		<a class="brand" href="/" aria-label="Recommendship">
+			<img class="brand-icon" src="/icon.svg" alt="" width="26" height="26" /><span class="brand-text" aria-hidden="true">Recommend<span>ship</span></span>
+		</a>
 		<nav aria-label="Main">
 			{#each tabs as t (t.href)}
 				<a href={t.href} class:active={isActive(t.href)} aria-current={isActive(t.href) ? 'page' : undefined}>{t.label}</a>
 			{/each}
+			<button class="help" aria-label="What is Recommendship?" title="What is this?" aria-expanded={ui.aboutOpen} onclick={() => (ui.aboutOpen = true)}
+				>?</button
+			>
 			<a
 				href="/account"
 				class="sync"
@@ -133,6 +140,10 @@
 	</main>
 {/if}
 
+<Sheet open={ui.aboutOpen} onclose={() => (ui.aboutOpen = false)} label="About Recommendship">
+	<AboutContent onclose={() => (ui.aboutOpen = false)} />
+</Sheet>
+
 <Toasts />
 
 <style>
@@ -163,8 +174,13 @@
 		text-decoration: none;
 	}
 
-	.brand span {
+	.brand-text span {
 		color: var(--accent);
+	}
+
+	.brand-icon {
+		display: none;
+		border-radius: 7px;
 	}
 
 	nav {
@@ -184,6 +200,27 @@
 
 	nav a.active {
 		background: var(--surface-2);
+		color: var(--text);
+	}
+
+	.help {
+		width: 1.6rem;
+		height: 1.6rem;
+		align-self: center;
+		border-radius: 50%;
+		border: 1.5px solid var(--muted);
+		background: none;
+		color: var(--muted);
+		font-weight: 700;
+		font-size: 0.85rem;
+		line-height: 1;
+		padding: 0;
+		margin-left: 0.2rem;
+	}
+
+	.help:hover,
+	.help[aria-expanded='true'] {
+		border-color: var(--text);
 		color: var(--text);
 	}
 
@@ -257,8 +294,34 @@
 		}
 
 		nav a {
-			padding: 0.35rem 0.45rem;
+			padding: 0.35rem 0.4rem;
 			font-size: 0.88rem;
+		}
+
+		nav a.sync {
+			width: 1.5rem;
+		}
+
+		.help {
+			width: 1.4rem;
+			height: 1.4rem;
+			margin-left: 0.1rem;
+		}
+	}
+
+	/* The smallest phones (iPhone SE, 320 px wide): the icon stands in for the name. */
+	@media (max-width: 360px) {
+		.brand-text {
+			display: none;
+		}
+
+		.brand-icon {
+			display: block;
+		}
+
+		nav a {
+			padding: 0.35rem 0.3rem;
+			font-size: 0.84rem;
 		}
 	}
 </style>

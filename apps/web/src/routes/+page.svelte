@@ -49,7 +49,7 @@
 		<div class="empty">
 			<h2>The Put List is empty</h2>
 			<p>When someone says “you have to watch…”, tap ＋ and log it with who said it.</p>
-			<p class="small"><a href="/about">New here? What Recommendship does</a></p>
+			<p class="small"><button class="link-btn" onclick={() => (ui.aboutOpen = true)}>New here? What Recommendship does</button></p>
 			<p class="actions">
 				<button class="btn primary" onclick={() => (ui.quickAddOpen = true)}>Add a recommendation</button>
 				<button class="btn" onclick={sample} disabled={loadingSample}>{loadingSample ? 'Loading…' : 'Load sample data'}</button>
