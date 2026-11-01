@@ -19,11 +19,10 @@
 	});
 
 	const result = $derived<Evaluation | null>(input ? evaluate(input, $state.snapshot(config)) : null);
-	const lift = $derived(result && result.n ? 1 - result.rmseModel / result.rmseMuC : 0);
+	const lift = $derived(result && result.n ? 1 - result.rmseModel / result.rmseStart : 0);
 	const fmt = (x: number) => (Number.isFinite(x) ? x.toFixed(3) : '–');
 
 	const KNOBS = [
-		{ key: 'kC', label: 'k_c (category mean → global)' },
 		{ key: 'kR', label: 'k_r (recommender offset)' },
 		{ key: 'kRc', label: 'k_rc (recommender × category)' },
 		{ key: 'kConf', label: 'k (confidence / weights)' },
@@ -43,19 +42,19 @@
 			<table class="data">
 				<thead><tr><th>Predictor</th><th class="r">RMSE</th></tr></thead>
 				<tbody>
-					<tr><td>Always your global mean (μ)</td><td class="r num">{fmt(result.rmseMu)}</td></tr>
-					<tr><td>Always your category mean (μ_c)</td><td class="r num">{fmt(result.rmseMuC)}</td></tr>
+					<tr><td>Always the starting point (3.5)</td><td class="r num">{fmt(result.rmseStart)}</td></tr>
+					<tr><td>Always your average (for comparison)</td><td class="r num">{fmt(result.rmseMean)}</td></tr>
 					<tr>
-						<td><b>Model</b> (μ_c + b_r + b_rc)</td>
+						<td><b>Model</b> (start + b_r + b_rc)</td>
 						<td class="r num"><b class:pos={lift > 0} class:neg={lift < 0}>{fmt(result.rmseModel)}</b></td>
 					</tr>
 				</tbody>
 			</table>
 			<p class="small">
 				{#if lift > 0}
-					Recommender track records cut the error by <b>{Math.round(lift * 100)}%</b> versus just knowing the category.
+					Recommender track records cut the error by <b>{Math.round(lift * 100)}%</b> versus always guessing 3.5.
 				{:else}
-					Not beating the category baseline yet. That's normal with little data; the shrinkage keeps it close to μ_c.
+					Not beating 3.5 yet. That's normal with little data; the shrinkage keeps predictions close to the starting point.
 				{/if}
 			</p>
 		{/if}

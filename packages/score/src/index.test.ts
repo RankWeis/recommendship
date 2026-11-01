@@ -11,9 +11,8 @@ const tried = (categoryId: string, rating: number, id = `i${++seq}`): ScoreItem 
 const pending = (categoryId: string, id: string): ScoreItem => ({ id, categoryId, status: 'TO_TRY', rating: null });
 
 /**
- * The design sketch's worked example (§4.4): global μ = 3.5, 10 movies with
- * mean 3.6, and Sam with three movies (4.5, 5, 4) and one restaurant (2)
- * against a restaurant baseline of 3.5.
+ * Sam with three movies (4.5, 5, 4) and one restaurant (2), plus ratings of
+ * other people's picks, which must not matter to Sam's predictions.
  */
 function workedExample(): ScoreInput {
 	const samPicks = [tried('movie', 4.5, 'sam-m1'), tried('movie', 5, 'sam-m2'), tried('movie', 4, 'sam-m3'), tried('restaurant', 2, 'sam-r1')];
@@ -26,28 +25,27 @@ function workedExample(): ScoreInput {
 	};
 }
 
-describe('worked example (§4.4)', () => {
+describe('worked example', () => {
 	const { model, predictions } = recompute(workedExample());
 	const byId = new Map(predictions.map((p) => [p.itemId, p]));
 
-	it('computes the baselines', () => {
-		expect(model.mu).toBeCloseTo(3.5, 5);
-		expect(model.muC.get('movie')).toBeCloseTo(3.58, 2);
-		expect(model.muC.get('restaurant')).toBeCloseTo(3.5, 5);
+	it('starts from the middle of the scale, not your average', () => {
+		expect(model.start).toBe(3.5);
 	});
 
 	it("computes Sam's offsets", () => {
-		expect(model.bR.get('sam')).toBeCloseTo(0.18, 2);
-		expect(model.bRc.get('sam\u0000movie')).toBeCloseTo(0.28, 2);
-		expect(model.bRc.get('sam\u0000restaurant')).toBeCloseTo(-0.28, 2);
+		// (1 + 1.5 + 0.5 − 1.5) / (4 + 3)
+		expect(model.bR.get('sam')).toBeCloseTo(0.214, 3);
+		expect(model.bRc.get('sam\u0000movie')).toBeCloseTo(0.295, 3);
+		expect(model.bRc.get('sam\u0000restaurant')).toBeCloseTo(-0.286, 3);
 	});
 
-	it("predicts Sam's new movie ≈ 4.04", () => {
-		expect(byId.get('sam-new-movie')?.predicted).toBeCloseTo(4.04, 2);
+	it("predicts Sam's new movie ≈ 4.01", () => {
+		expect(byId.get('sam-new-movie')?.predicted).toBeCloseTo(4.01, 2);
 	});
 
-	it("predicts Sam's new restaurant ≈ 3.40", () => {
-		expect(byId.get('sam-new-restaurant')?.predicted).toBeCloseTo(3.4, 2);
+	it("predicts Sam's new restaurant ≈ 3.43", () => {
+		expect(byId.get('sam-new-restaurant')?.predicted).toBeCloseTo(3.43, 2);
 	});
 
 	it('is more confident about the movie than the restaurant', () => {
@@ -55,20 +53,48 @@ describe('worked example (§4.4)', () => {
 	});
 });
 
+describe('per person', () => {
+	const jeffMovie = tried('movie', 3, 'jeff-1');
+	const input = (jeffRating: number): ScoreInput => ({
+		items: [{ ...jeffMovie, rating: jeffRating }, tried('movie', 4, 'jona-1'), pending('movie', 'jona-new'), pending('movie', 'kim-new')],
+		recommendations: [
+			{ itemId: 'jeff-1', recommenderId: 'jeff' },
+			{ itemId: 'jona-1', recommenderId: 'jona' },
+			{ itemId: 'jona-new', recommenderId: 'jona' },
+			{ itemId: 'kim-new', recommenderId: 'kim' }
+		]
+	});
+
+	it("rating one person's pick leaves everyone else's predictions alone", () => {
+		const before = recompute(input(3)).predictions;
+		const after = recompute(input(5)).predictions;
+		for (const id of ['jona-new', 'kim-new']) {
+			const b = before.find((p) => p.itemId === id)!;
+			const a = after.find((p) => p.itemId === id)!;
+			expect(a).toEqual(b);
+		}
+	});
+
+	it('leaves someone with no rated picks at the starting point', () => {
+		const kim = recompute(input(5)).predictions.find((p) => p.itemId === 'kim-new')!;
+		expect(kim).toMatchObject({ predicted: 3.5, confidence: 0 });
+	});
+});
+
 describe('edge cases', () => {
-	it('uses the prior with no ratings', () => {
+	it('uses the starting point with no ratings', () => {
 		const { predictions } = recompute({ items: [pending('movie', 'a')], recommendations: [{ itemId: 'a', recommenderId: 'sam' }] });
 		expect(predictions[0]).toMatchObject({ predicted: 3.5, confidence: 0 });
 	});
 
-	it('uses the prior until there are enough ratings', () => {
-		const model = fit({ items: [tried('movie', 5), tried('movie', 5)], recommendations: [] });
-		expect(model.mu).toBe(3.5);
+	it('follows the rating scale', () => {
+		const config = { ...DEFAULT_CONFIG, scaleMin: 0, scaleMax: 10 };
+		expect(fit({ items: [], recommendations: [] }, config).start).toBe(5.5);
 	});
 
-	it('gives an item without a recommender μ_c and zero confidence', () => {
+	it('gives an item without a recommender the starting point and zero confidence', () => {
 		const p = predict(fit(workedExample()), { id: 'x', categoryId: 'movie' }, []);
-		expect(p.predicted).toBeCloseTo(3.58, 2);
+		expect(p.predicted).toBe(3.5);
 		expect(p.confidence).toBe(0);
 	});
 
@@ -76,10 +102,9 @@ describe('edge cases', () => {
 		const model = fit(workedExample());
 		const sam = predict(model, { id: 'x', categoryId: 'movie' }, ['sam']).predicted;
 		const both = predict(model, { id: 'x', categoryId: 'movie' }, ['sam', 'sam-twin']).predicted;
-		const muC = model.muC.get('movie')!;
 		// The unknown second recommender has weight 0, so it neither adds nor dilutes.
 		expect(both).toBeCloseTo(sam, 5);
-		expect(both - muC).toBeLessThan(2 * (sam - muC));
+		expect(both - model.start).toBeLessThan(2 * (sam - model.start));
 	});
 
 	it('adds the agreement bonus only when configured, capped', () => {
@@ -95,6 +120,12 @@ describe('edge cases', () => {
 		input.items.push({ id: 'meh', categoryId: 'movie', status: 'DISMISSED', rating: 1 });
 		input.recommendations.push({ itemId: 'meh', recommenderId: 'sam' });
 		expect(fit(input).bR.get('sam')).toBe(base.bR.get('sam'));
+	});
+
+	it("doesn't call two identical ratings a sure thing", () => {
+		const items = [tried('movie', 5, 'a'), tried('movie', 5, 'b')];
+		const model = fit({ items, recommendations: items.map((i) => ({ itemId: i.id, recommenderId: 'sam' })) });
+		expect(model.sigmaR.get('sam')).toBeGreaterThan(0.5);
 	});
 
 	it('clamps predictions to the scale', () => {
@@ -125,11 +156,11 @@ describe('recommender stats', () => {
 	});
 
 	it('reports the full per-category offset', () => {
-		expect(movies.offsetShrunk).toBeCloseTo(0.18 + 0.28, 2);
+		expect(movies.offsetShrunk).toBeCloseTo(0.214 + 0.295, 3);
 	});
 });
 
-describe('leave-one-out evaluation (§4.5)', () => {
+describe('leave-one-out evaluation', () => {
 	it('beats the naive baselines when recommenders are consistent', () => {
 		const items: ScoreItem[] = [];
 		const recommendations = [];
@@ -141,8 +172,8 @@ describe('leave-one-out evaluation (§4.5)', () => {
 		}
 		const e = evaluate({ items, recommendations });
 		expect(e.n).toBe(30);
-		expect(e.rmseModel).toBeLessThan(e.rmseMu);
-		expect(e.rmseModel).toBeLessThan(e.rmseMuC);
+		expect(e.rmseModel).toBeLessThan(e.rmseStart);
+		expect(e.rmseModel).toBeLessThan(e.rmseMean);
 	});
 
 	it('returns NaN with nothing rated', () => {

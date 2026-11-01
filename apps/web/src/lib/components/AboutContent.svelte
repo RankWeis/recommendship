@@ -20,7 +20,7 @@
 		<li><b>It goes on the Put List,</b> the things you mean to get to.</li>
 		<li><b>Try it, then rate it,</b> half a star at a time.</li>
 		<li>
-			<b>See how much you'll like the rest.</b> Each person gets a score from how your ratings of their picks compare with your usual ones.
+			<b>See how much you'll like the rest.</b> Each person gets a score from how you rated their earlier picks, and only theirs.
 			With only a few ratings their score stays near neutral, so one lucky pick doesn't make someone a guru. The dots next to a prediction
 			show how sure it is.
 		</li>

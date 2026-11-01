@@ -1,29 +1,31 @@
-// Baseline predictor with shrinkage (design sketch §4).
+// Per-person predictor with shrinkage.
 //
-//   predicted(i) = μ_c + b_r + b_rc
+//   predicted(i) = start + b_r + b_rc
 //
-// μ_c is your category mean shrunk toward your global mean μ; b_r is how much
-// better or worse r's picks run for you than your baseline; b_rc is r's extra
+// start is a fixed middle-of-the-road rating (3.5 on a 1–5 scale); b_r is how
+// much better or worse r's picks have run for you than that; b_rc is r's extra
 // adjustment within category c. Every term's denominator carries k phantom
-// ratings at offset 0 ("assume average until proven otherwise"), so a
+// ratings at offset 0 ("assume middling until proven otherwise"), so a
 // recommender's reputation only moves once there is real evidence.
+//
+// A prediction rests only on the ratings of its own recommenders' picks: rating
+// Jeff's movie changes Jeff's predictions and nobody else's. (The model used to
+// start from your average rating, so every rating nudged every prediction.)
 //
 // Everything here is pure: the app feeds in rows from local SQLite and writes
 // the results back to its derived tables.
 
 export interface ScoreConfig {
-	/** Shrinkage of μ_c toward μ. */
-	kC: number;
 	/** Shrinkage of b_r toward 0. */
 	kR: number;
 	/** Shrinkage of b_rc toward 0, harder because it rests on even less data. */
 	kRc: number;
-	/** k in confidence = n_eff / (n_eff + k) and in the multi-recommender weights. */
+	/** k in confidence = n_eff / (n_eff + k), in the multi-recommender weights, and in each person's spread. */
 	kConf: number;
-	/** Below this many ratings μ is the prior (scale midpoint + 0.5) instead of your mean. */
-	priorMinRatings: number;
 	scaleMin: number;
 	scaleMax: number;
+	/** How far off a prediction is assumed to be, in stars, before a person's ratings say otherwise. */
+	sigma0: number;
 	/** Added per extra recommender on one item. 0 keeps v1 pure. */
 	agreementBonus: number;
 	agreementCap: number;
@@ -34,13 +36,12 @@ export interface ScoreConfig {
 }
 
 export const DEFAULT_CONFIG: ScoreConfig = {
-	kC: 3,
 	kR: 3,
 	kRc: 5,
 	kConf: 3,
-	priorMinRatings: 5,
 	scaleMin: 1,
 	scaleMax: 5,
+	sigma0: 1,
 	agreementBonus: 0,
 	agreementCap: 0.3,
 	z: 1,
@@ -68,19 +69,14 @@ export interface ScoreInput {
 
 export interface Model {
 	config: ScoreConfig;
-	mu: number;
-	nRated: number;
-	/** Shrunk μ_c for every category that has ratings; others fall back to μ. */
-	muC: Map<string, number>;
-	nC: Map<string, number>;
+	/** Where every prediction starts: the scale's midpoint plus half a star. */
+	start: number;
 	bR: Map<string, number>;
 	nR: Map<string, number>;
 	bRc: Map<string, number>;
 	nRc: Map<string, number>;
-	/** Stdev of each recommender's residuals after the model (only when n_r ≥ 2). */
+	/** How far off each recommender's predictions run, pulled toward sigma0 until there's evidence. */
 	sigmaR: Map<string, number>;
-	/** Stdev of x − μ_c over all your ratings. */
-	sigmaGlobal: number;
 }
 
 export interface RecommenderTerm {
@@ -94,8 +90,7 @@ export interface RecommenderTerm {
 
 export interface Explanation {
 	categoryId: string;
-	muC: number;
-	nC: number;
+	start: number;
 	recommenders: RecommenderTerm[];
 	agreementBonus: number;
 }
@@ -126,12 +121,6 @@ function isRated(i: ScoreItem): i is ScoreItem & { rating: number } {
 	return i.status === 'TRIED' && i.rating != null;
 }
 
-function stdev(xs: number[]): number | null {
-	if (xs.length < 2) return null;
-	const m = xs.reduce((a, b) => a + b, 0) / xs.length;
-	return Math.sqrt(xs.reduce((a, x) => a + (x - m) ** 2, 0) / (xs.length - 1));
-}
-
 function add(m: Map<string, number>, k: string, v: number) {
 	m.set(k, (m.get(k) ?? 0) + v);
 }
@@ -147,33 +136,20 @@ function recommendersByItem(recs: ScoreRecommendation[]): Map<string, string[]> 
 	return new Map([...out].map(([k, v]) => [k, [...v]]));
 }
 
+export const startingPoint = (config: ScoreConfig) => (config.scaleMin + config.scaleMax) / 2 + 0.5;
+
 export function fit(input: ScoreInput, config: ScoreConfig = DEFAULT_CONFIG): Model {
-	const { kC, kR, kRc } = config;
+	const { kR, kRc, kConf, sigma0 } = config;
+	const start = startingPoint(config);
 	const rated = input.items.filter(isRated);
 	const byItem = recommendersByItem(input.recommendations);
 
-	const prior = (config.scaleMin + config.scaleMax) / 2 + 0.5;
-	const mu =
-		rated.length >= config.priorMinRatings
-			? rated.reduce((a, i) => a + i.rating, 0) / rated.length
-			: prior;
-
-	const sumC = new Map<string, number>();
-	const nC = new Map<string, number>();
-	for (const i of rated) {
-		add(sumC, i.categoryId, i.rating);
-		add(nC, i.categoryId, 1);
-	}
-	const muC = new Map<string, number>();
-	for (const [c, n] of nC) muC.set(c, ((sumC.get(c) ?? 0) + kC * mu) / (n + kC));
-	const baseline = (c: string) => muC.get(c) ?? mu;
-
-	// b_r: shrunk mean residual of r's picks against your category baseline.
+	// b_r: shrunk mean of r's picks against the starting point.
 	const sumR = new Map<string, number>();
 	const nR = new Map<string, number>();
 	for (const i of rated) {
 		for (const r of byItem.get(i.id) ?? []) {
-			add(sumR, r, i.rating - baseline(i.categoryId));
+			add(sumR, r, i.rating - start);
 			add(nR, r, 1);
 		}
 	}
@@ -186,40 +162,35 @@ export function fit(input: ScoreInput, config: ScoreConfig = DEFAULT_CONFIG): Mo
 	for (const i of rated) {
 		for (const r of byItem.get(i.id) ?? []) {
 			const k = rcKey(r, i.categoryId);
-			add(sumRc, k, i.rating - baseline(i.categoryId) - (bR.get(r) ?? 0));
+			add(sumRc, k, i.rating - start - (bR.get(r) ?? 0));
 			add(nRc, k, 1);
 		}
 	}
 	const bRc = new Map<string, number>();
 	for (const [k, n] of nRc) bRc.set(k, (sumRc.get(k) ?? 0) / (n + kRc));
 
-	const residualsR = new Map<string, number[]>();
+	// Spread of r's ratings around the model, with kConf phantom ratings at sigma0
+	// so two lucky ratings don't make someone look certain.
+	const sqR = new Map<string, number>();
 	for (const i of rated) {
 		for (const r of byItem.get(i.id) ?? []) {
-			const fitted = baseline(i.categoryId) + (bR.get(r) ?? 0) + (bRc.get(rcKey(r, i.categoryId)) ?? 0);
-			let xs = residualsR.get(r);
-			if (!xs) residualsR.set(r, (xs = []));
-			xs.push(i.rating - fitted);
+			const fitted = start + (bR.get(r) ?? 0) + (bRc.get(rcKey(r, i.categoryId)) ?? 0);
+			add(sqR, r, (i.rating - fitted) ** 2);
 		}
 	}
 	const sigmaR = new Map<string, number>();
-	for (const [r, xs] of residualsR) {
-		const s = stdev(xs);
-		if (s != null) sigmaR.set(r, s);
-	}
-	const sigmaGlobal = stdev(rated.map((i) => i.rating - baseline(i.categoryId))) ?? 1;
+	for (const [r, n] of nR) sigmaR.set(r, Math.sqrt(((sqR.get(r) ?? 0) + kConf * sigma0 ** 2) / (n + kConf)));
 
-	return { config, mu, nRated: rated.length, muC, nC, bR, nR, bRc, nRc, sigmaR, sigmaGlobal };
+	return { config, start, bR, nR, bRc, nRc, sigmaR };
 }
 
 /**
- * Predict one item from its recommenders (§4.2): offsets are combined as a
+ * Predict one item from its recommenders: offsets are combined as a
  * confidence-weighted mean, not summed, so two recommenders don't double-count.
  */
 export function predict(model: Model, item: Pick<ScoreItem, 'id' | 'categoryId'>, recommenderIds: string[]): Prediction {
-	const { config } = model;
+	const { config, start } = model;
 	const c = item.categoryId;
-	const muC = model.muC.get(c) ?? model.mu;
 
 	let wSum = 0;
 	let offSum = 0;
@@ -236,22 +207,22 @@ export function predict(model: Model, item: Pick<ScoreItem, 'id' | 'categoryId'>
 		wSum += weight;
 		offSum += weight * (bR + bRc);
 		nEff += n;
-		sigmas.push(model.sigmaR.get(r) ?? model.sigmaGlobal);
+		sigmas.push(model.sigmaR.get(r) ?? config.sigma0);
 		terms.push({ recommenderId: r, bR, bRc, nR, nRc, weight });
 	}
 
 	const offset = wSum > 0 ? offSum / wSum : 0;
 	const bonus = Math.min(config.agreementBonus * Math.max(terms.length - 1, 0), config.agreementCap);
 	const clamp = (x: number) => Math.min(config.scaleMax, Math.max(config.scaleMin, x));
-	const predicted = clamp(muC + offset + bonus);
-	const sigma = sigmas.length ? sigmas.reduce((a, b) => a + b, 0) / sigmas.length : model.sigmaGlobal;
+	const predicted = clamp(start + offset + bonus);
+	const sigma = sigmas.length ? sigmas.reduce((a, b) => a + b, 0) / sigmas.length : config.sigma0;
 
 	return {
 		itemId: item.id,
 		predicted,
 		confidence: nEff / (nEff + config.kConf),
 		lowerBound: clamp(predicted - (config.z * sigma) / Math.sqrt(nEff + 1)),
-		explanation: { categoryId: c, muC, nC: model.nC.get(c) ?? 0, recommenders: terms, agreementBonus: bonus }
+		explanation: { categoryId: c, start, recommenders: terms, agreementBonus: bonus }
 	};
 }
 
@@ -304,29 +275,34 @@ export function recompute(input: ScoreInput, config: ScoreConfig = DEFAULT_CONFI
 export interface Evaluation {
 	n: number;
 	rmseModel: number;
-	rmseMu: number;
-	rmseMuC: number;
+	/** Always the starting point. */
+	rmseStart: number;
+	/** Always your average of the other ratings, for comparison. */
+	rmseMean: number;
 }
 
 /**
- * Leave-one-out (§4.5): predict each rated item from all the other data and
- * compare with the real rating, against the naive "always μ" and "always μ_c".
+ * Leave-one-out: predict each rated item from all the other data and compare
+ * with the real rating, against the naive "always the starting point" and
+ * "always your average".
  */
 export function evaluate(input: ScoreInput, config: ScoreConfig = DEFAULT_CONFIG): Evaluation {
 	const byItem = recommendersByItem(input.recommendations);
 	const rated = input.items.filter(isRated);
+	const total = rated.reduce((a, i) => a + i.rating, 0);
 	let seModel = 0;
-	let seMu = 0;
-	let seMuC = 0;
+	let seStart = 0;
+	let seMean = 0;
 	for (const held of rated) {
 		const items = input.items.map((i) => (i.id === held.id ? { ...i, status: 'TO_TRY' as const, rating: null } : i));
 		const model = fit({ items, recommendations: input.recommendations }, config);
 		const p = predict(model, held, byItem.get(held.id) ?? []);
+		const mean = rated.length > 1 ? (total - held.rating) / (rated.length - 1) : model.start;
 		seModel += (p.predicted - held.rating) ** 2;
-		seMu += (model.mu - held.rating) ** 2;
-		seMuC += ((model.muC.get(held.categoryId) ?? model.mu) - held.rating) ** 2;
+		seStart += (model.start - held.rating) ** 2;
+		seMean += (mean - held.rating) ** 2;
 	}
 	const n = rated.length;
 	const rmse = (se: number) => (n ? Math.sqrt(se / n) : NaN);
-	return { n, rmseModel: rmse(seModel), rmseMu: rmse(seMu), rmseMuC: rmse(seMuC) };
+	return { n, rmseModel: rmse(seModel), rmseStart: rmse(seStart), rmseMean: rmse(seMean) };
 }
