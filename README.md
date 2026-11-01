@@ -29,7 +29,7 @@ Log who recommends what to you (movies, books, restaurants, podcasts…), rate t
 ## How it works
 
 - **Local-first.** The real database is SQLite (WASM) in the browser, persisted to OPFS, managed by the [PowerSync](https://www.powersync.com/) web SDK. Every save is a local write, so capture works with no signal. Writes queue for upload and go through `POST /api/write`; changes stream back down from Postgres.
-- **Scoring** ([packages/score](packages/score/src/index.ts)) is a baseline predictor with shrinkage: `predicted = μ_c + b_r + b_rc`, where each offset is pulled toward zero until there's evidence. It runs on the device and rewrites two local-only tables after every change.
+- **Scoring** ([packages/score](packages/score/src/index.ts)) is a per-person predictor with shrinkage: `predicted = start + b_r + b_rc`, where `start` is a fixed 3.5 and each person's offsets come only from your ratings of their picks, pulled toward zero until there's evidence. It runs on the device and rewrites two local-only tables after every change.
 - **Schema** ([packages/schema](packages/schema/src)) is defined in Drizzle twice, as SQLite for the device and Postgres for the server, with a test that keeps their columns identical.
 - **Server** ([apps/server](apps/server/src)): Hono + Better Auth on Node. Better Auth's JWT plugin issues the tokens PowerSync verifies, so one sign-in covers the API and sync.
 

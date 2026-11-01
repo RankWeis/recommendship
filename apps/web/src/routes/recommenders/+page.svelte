@@ -61,8 +61,8 @@
 	</ul>
 	{#if people.rows.length}
 		<p class="muted small">
-			The score is how much better or worse a person's picks run for you than your own average for that category, shrunk toward
-			zero until there's enough evidence.
+			The score is how much better or worse a person's picks run for you than a middling 3.5, shrunk toward zero until there's
+			enough evidence. It comes only from your ratings of their picks.
 		</p>
 	{/if}
 </main>

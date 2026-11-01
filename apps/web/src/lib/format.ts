@@ -32,11 +32,12 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 /**
  * The one-line "why this number" (§5.2), e.g.
- * "Your movie average 3.6 · Sam's movies run +0.5 for you (3 rated)."
+ * "Starts at 3.5 · Sam's movie picks run +0.5 for you (3 rated)."
  */
 export function explain(e: Explanation, categoryName: string, nameOf: (id: string) => string): string {
 	const cat = categoryName.toLowerCase();
-	const parts = [`Your ${cat} average ${e.muC.toFixed(1)}${e.nC ? '' : ' (no ratings yet)'}`];
+	// Explanations saved before the per-person model have no start; the next recompute replaces them.
+	const parts = [`Starts at ${(e.start ?? 3.5).toFixed(1)}`];
 	if (!e.recommenders.length) parts.push('no recommender, so no adjustment');
 	for (const r of e.recommenders) {
 		const name = nameOf(r.recommenderId);
