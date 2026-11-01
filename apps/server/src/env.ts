@@ -45,7 +45,7 @@ const schema = z.object({
 	/** Most items, people and recommendations (each) one user may store. */
 	ROW_QUOTA: z.coerce.number().int().positive().default(10_000),
 	/** New accounts per UTC day (admins don't count and are never refused). */
-	MAX_NEW_USERS_PER_DAY: z.coerce.number().int().nonnegative().default(1_000),
+	MAX_NEW_USERS_PER_DAY: z.coerce.number().int().nonnegative().default(2_000),
 	/**
 	 * Open sign-up: new accounts are approved automatically while fewer than this many
 	 * accounts are approved; past it, people wait for an invite or an admin's Approve.

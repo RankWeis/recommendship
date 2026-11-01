@@ -56,7 +56,16 @@ export function authOptions(env: Env, pool: pg.Pool, db?: Db) {
 				: {},
 		// Production only (Better Auth's own default): locally every request shares one IP, and the
 		// e2e tests sign in several times within seconds.
-		rateLimit: { enabled: env.NODE_ENV === 'production', window: 60, max: 60 },
+		//
+		// Limits are per network address, and many phones share one (carrier NAT, a room on
+		// the same Wi-Fi), so they're looser than Better Auth's defaults (60 a minute, and
+		// 3 sign-ins per 10 s). Google itself guards the sign-in; email sign-in is off here.
+		rateLimit: {
+			enabled: env.NODE_ENV === 'production',
+			window: 60,
+			max: 300,
+			customRules: { '/sign-in/social': { window: 10, max: 30 } }
+		},
 		// Rate limits are per client IP. Behind Fly's proxy the socket address is the proxy's,
 		// so read Fly-Client-IP, which the proxy sets itself (unlike X-Forwarded-For).
 		advanced: { ipAddress: { ipAddressHeaders: ['fly-client-ip'] } },
