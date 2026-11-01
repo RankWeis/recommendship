@@ -1,6 +1,8 @@
 <script lang="ts">
 	// What Recommendship is: shown in the ? panel from the header and on /about (which
 	// Google's sign-in screen and shared links point at). In the panel, links close it.
+	import { FEEDBACK } from '#lib/format.ts';
+
 	let { onclose }: { onclose?: () => void } = $props();
 </script>
 
@@ -52,6 +54,12 @@
 	{:else}
 		<p class="cta"><a class="btn primary" href="/">Open the Put List</a></p>
 	{/if}
+
+	<h2>Found a bug, or have an idea?</h2>
+	<p>
+		It's in beta, so please say: <a href={FEEDBACK}>send feedback</a> by email, or
+		<a href="https://github.com/RankWeis/recommendship/issues" target="_blank" rel="noopener">open an issue on GitHub</a>.
+	</p>
 
 	<p class="small muted">
 		Made by Kian Samii · <a href="mailto:kian.samii@gmail.com">kian.samii@gmail.com</a> · <a href="/privacy">Privacy</a> ·

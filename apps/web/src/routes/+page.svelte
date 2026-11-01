@@ -1,5 +1,7 @@
 <script lang="ts">
 	import ItemRow from '#lib/components/ItemRow.svelte';
+	import SelectBar from '#lib/components/SelectBar.svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 	import { useCategories } from '#lib/categories.svelte.ts';
 	import { liveQuery } from '#lib/db/live.svelte.ts';
 	import { LIST_ITEM_COLUMNS, LIST_ITEM_FROM, type ListItemRow } from '#lib/db/rows.ts';
@@ -18,6 +20,8 @@
 	let sort = $state<SortKey>('best');
 	let tab = $state<string>('all');
 	let loadingSample = $state(false);
+	let selecting = $state(false);
+	const selected = new SvelteSet<string>();
 
 	const categories = useCategories();
 	const people = usePeople();
@@ -52,7 +56,10 @@
 			<p class="small"><button class="link-btn" onclick={() => (ui.aboutOpen = true)}>New here? What Recommendship does</button></p>
 			<p class="actions">
 				<button class="btn primary" onclick={() => (ui.quickAddOpen = true)}>Add a recommendation</button>
-				<button class="btn" onclick={sample} disabled={loadingSample}>{loadingSample ? 'Loading…' : 'Load sample data'}</button>
+				<!-- Made-up people and ratings that sync and skew real predictions: local development only. -->
+				{#if import.meta.env.DEV}
+					<button class="btn" onclick={sample} disabled={loadingSample}>{loadingSample ? 'Loading…' : 'Load sample data'}</button>
+				{/if}
 			</p>
 		</div>
 	{:else}
@@ -67,21 +74,37 @@
 					</button>
 				{/each}
 			</div>
-			<label class="sort small">
+			<div class="tools">
+				<button class="btn ghost small" aria-pressed={selecting} onclick={() => ((selecting = !selecting), selected.clear())}
+					>{selecting ? 'Cancel' : 'Select'}</button
+				>
+				<label class="sort small">
 				<span class="muted">Sort</span>
 				<select bind:value={sort}>
 					{#each Object.entries(SORTS) as [key, s] (key)}
 						<option value={key}>{s.label}</option>
 					{/each}
 				</select>
-			</label>
+				</label>
+			</div>
 		</div>
 
 		<ul class="list">
 			{#each shown as item (item.id)}
-				<ItemRow {item} category={categories.get(item.category_id)} nameOf={people.nameOf} showCategory={tab === 'all'} />
+				<ItemRow
+					{item}
+					category={categories.get(item.category_id)}
+					nameOf={people.nameOf}
+					showCategory={tab === 'all'}
+					{selecting}
+					selected={selected.has(item.id)}
+					ontoggle={() => (selected.has(item.id) ? selected.delete(item.id) : selected.add(item.id))}
+				/>
 			{/each}
 		</ul>
+		{#if selecting}
+			<SelectBar {selected} shown={shown.map((i) => i.id)} ondone={() => ((selecting = false), selected.clear())} />
+		{/if}
 		<p class="muted small hint">
 			<span class="on-touch">Tap a number to see why. Swipe right when you've tried it, left to dismiss.</span>
 			<span class="on-mouse">Click a number to see why. Press ✓ when you've tried it, ✕ to dismiss.</span>
@@ -111,8 +134,13 @@
 		font-variant-numeric: tabular-nums;
 	}
 
+	.tools {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
 	.sort {
-		align-self: flex-end;
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;

@@ -51,3 +51,6 @@ export function explain(e: Explanation, categoryName: string, nameOf: (id: strin
 	if (e.agreementBonus) parts.push(`${fmtOffset(e.agreementBonus)} for agreement`);
 	return parts.join(' · ') + '.';
 }
+
+/** Where "Send feedback" goes: an email to the person running Recommendship. */
+export const FEEDBACK = 'mailto:kian.samii@gmail.com?subject=Recommendship%20feedback';

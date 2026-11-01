@@ -118,7 +118,9 @@
 	{@render children()}
 {:else if status === 'ready'}
 	{@render children()}
-	<button class="fab" onclick={() => (ui.quickAddOpen = true)} aria-label="Add a recommendation" title="Add (n)">＋</button>
+	{#if !ui.selecting}
+		<button class="fab" onclick={() => (ui.quickAddOpen = true)} aria-label="Add a recommendation" title="Add (n)">＋</button>
+	{/if}
 	<QuickAdd />
 	<RateSheet />
 {:else if status === 'failed'}

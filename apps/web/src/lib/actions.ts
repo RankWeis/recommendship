@@ -324,6 +324,63 @@ export async function deleteItem(id: string) {
 	});
 }
 
+/**
+ * Delete many items at once (select and delete), with their recommendations, and then
+ * anyone who no longer recommends anything. Written in transactions of at most ~400
+ * changes, because one upload request takes 500.
+ */
+export async function deleteItems(ids: string[]): Promise<{ items: number; people: number }> {
+	const touched = new Set<string>();
+	const marks = (n: number) => Array(n).fill('?').join(', ');
+	for (let k = 0; k < ids.length; k += 100) {
+		const page = ids.slice(k, k + 100);
+		const recs = await db.getAll<{ item_id: string; recommender_id: string }>(
+			`SELECT item_id, recommender_id FROM recommendation WHERE item_id IN (${marks(page.length)})`,
+			page
+		);
+		const recCount = new Map<string, number>();
+		for (const r of recs) {
+			recCount.set(r.item_id, (recCount.get(r.item_id) ?? 0) + 1);
+			touched.add(r.recommender_id);
+		}
+		let batch: string[] = [];
+		let changes = 0;
+		const flush = async () => {
+			if (!batch.length) return;
+			const b = batch;
+			batch = [];
+			changes = 0;
+			await db.writeTransaction(async (tx) => {
+				await tx.execute(`DELETE FROM recommendation WHERE item_id IN (${marks(b.length)})`, b);
+				await tx.execute(`DELETE FROM item WHERE id IN (${marks(b.length)})`, b);
+			});
+		};
+		for (const id of page) {
+			const cost = 1 + (recCount.get(id) ?? 0);
+			if (changes + cost > 400) await flush();
+			batch.push(id);
+			changes += cost;
+		}
+		await flush();
+	}
+
+	const candidates = [...touched];
+	const orphans: string[] = [];
+	for (let k = 0; k < candidates.length; k += 400) {
+		const page = candidates.slice(k, k + 400);
+		const rows = await db.getAll<{ id: string }>(
+			`SELECT id FROM recommender WHERE id IN (${marks(page.length)}) AND id NOT IN (SELECT recommender_id FROM recommendation)`,
+			page
+		);
+		orphans.push(...rows.map((r) => r.id));
+	}
+	for (let k = 0; k < orphans.length; k += 400) {
+		const page = orphans.slice(k, k + 400);
+		await db.execute(`DELETE FROM recommender WHERE id IN (${marks(page.length)})`, page);
+	}
+	return { items: ids.length, people: orphans.length };
+}
+
 export async function createCategory(name: string, icon: string): Promise<string> {
 	const id = uuid();
 	await db.execute(

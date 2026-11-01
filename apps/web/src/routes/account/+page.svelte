@@ -2,7 +2,7 @@
 	import { page } from '$app/state';
 	import { planBackupImport, readBackup, writeImport } from '#lib/actions.ts';
 	import { parseBackup, toCsv } from '#lib/backup.ts';
-	import { relativeDate } from '#lib/format.ts';
+	import { FEEDBACK, relativeDate } from '#lib/format.ts';
 	import { account, devSignIn, redeemInvite, signInWithGoogle, signOut } from '#lib/sync.svelte.ts';
 	import { toast } from '#lib/toast.svelte.ts';
 
@@ -342,7 +342,7 @@
 		Movie and TV details and posters from <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>. This product uses the
 		TMDB API but is not endorsed or certified by TMDB. Book details and covers from
 		<a href="https://openlibrary.org" target="_blank" rel="noopener">Open Library</a>.
-		<br /><a href="/about">About</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a>
+		<br /><a href={FEEDBACK}>Send feedback</a> · <a href="/about">About</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a>
 	</footer>
 </main>
 
