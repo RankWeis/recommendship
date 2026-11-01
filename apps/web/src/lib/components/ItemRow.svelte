@@ -11,8 +11,20 @@
 		item,
 		category,
 		nameOf,
-		showCategory = false
-	}: { item: ListItemRow; category: CategoryRow; nameOf: (id: string) => string; showCategory?: boolean } = $props();
+		showCategory = false,
+		selecting = false,
+		selected = false,
+		ontoggle
+	}: {
+		item: ListItemRow;
+		category: CategoryRow;
+		nameOf: (id: string) => string;
+		showCategory?: boolean;
+		/** Select mode: tapping the row ticks it instead of opening it, and swiping is off. */
+		selecting?: boolean;
+		selected?: boolean;
+		ontoggle?: () => void;
+	} = $props();
 
 	const names = $derived(parseJson<string[]>(item.recommender_names, []));
 	const explanation = $derived(parseExplanation(item.explanation));
@@ -25,7 +37,7 @@
 	let horizontal = false;
 
 	function down(e: PointerEvent) {
-		if (e.pointerType === 'mouse' || item.status !== 'TO_TRY') return;
+		if (e.pointerType === 'mouse' || item.status !== 'TO_TRY' || selecting) return;
 		start = { x: e.clientX, y: e.clientY, id: e.pointerId };
 		horizontal = false;
 	}
@@ -78,13 +90,20 @@
 		onpointerup={up}
 		onpointercancel={up}
 		role="group"
+		class:selected={selecting && selected}
 	>
+		{#if selecting}
+			<input class="tick" type="checkbox" checked={selected} onchange={() => ontoggle?.()} aria-label="Select “{item.title}”" />
+		{/if}
 		<a
 			class="main"
 			href="/items/{item.id}"
 			draggable="false"
 			onclick={(e) => {
-				if (suppressClick) e.preventDefault();
+				if (selecting) {
+					e.preventDefault();
+					ontoggle?.();
+				} else if (suppressClick) e.preventDefault();
 				suppressClick = false;
 			}}
 		>
@@ -114,7 +133,7 @@
 			</button>
 		{/if}
 
-		{#if item.status === 'TO_TRY'}
+		{#if item.status === 'TO_TRY' && !selecting}
 			<span class="quick">
 				<button class="icon-btn" onclick={markTried} title="Tried it, rate" aria-label="Mark “{item.title}” as tried">✓</button>
 				<button class="icon-btn" onclick={dismiss} title="Won't do it" aria-label="Dismiss “{item.title}”">✕</button>
@@ -170,6 +189,18 @@
 		background: var(--bg);
 		touch-action: pan-y;
 		transition: transform 0.2s ease-out;
+	}
+
+	.row.selected {
+		background: var(--accent-soft);
+	}
+
+	.tick {
+		flex: none;
+		width: 1.2rem;
+		height: 1.2rem;
+		margin: 0 0 0 0.2rem;
+		accent-color: var(--accent);
 	}
 
 	.row.dragging {

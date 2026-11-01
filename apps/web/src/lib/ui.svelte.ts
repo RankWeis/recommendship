@@ -2,7 +2,9 @@
 export const ui = $state({
 	quickAddOpen: false,
 	rateItemId: null as string | null,
-	aboutOpen: false
+	aboutOpen: false,
+	/** A list is in select mode: the ＋ button steps aside for its toolbar. */
+	selecting: false
 });
 
 // Per-device conveniences (§5.1). Storage can be unavailable (private mode), so every access is guarded.
