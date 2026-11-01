@@ -1,9 +1,16 @@
 name: Keep replication alive
 
-# PowerSync scales to zero on Fly. Neon deletes a replication slot that makes no
-# progress for ~40 hours, which would force PowerSync to replicate everything
+# Daily, for production and staging:
+#
+# wake: PowerSync scales to zero on Fly. Neon deletes a replication slot that makes
+# no progress for ~40 hours, which would force PowerSync to replicate everything
 # again. Waking each environment once a day keeps its slot current. Each wake
 # costs a few minutes of machine time.
+#
+# compact: PowerSync keeps every change in its bucket storage until it's compacted,
+# so heavy editing would grow storage (and the Neon bill) without end. PowerSync
+# Cloud compacts daily; self-hosted, we run the image's `compact` command ourselves,
+# on a one-off machine in the sync app (it gets the app's database secrets there).
 
 on:
   schedule:
@@ -16,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        sync: [https://recommendship-sync.fly.dev, https://recommendship-staging-sync.fly.dev]
+        sync: ['https://recommendship-sync.fly.dev', 'https://recommendship-staging-sync.fly.dev']
     steps:
       - name: Wake PowerSync and let it catch up
         run: |
@@ -26,3 +33,41 @@ jobs:
           code=$(curl -s -o /dev/null -w '%{http_code}' --retry 3 --retry-all-errors --max-time 30 "${{ matrix.sync }}/")
           echo "PowerSync answered HTTP $code"
           [[ "$code" =~ ^[2-4] ]]
+
+  compact:
+    if: vars.DEPLOY_ENABLED == 'true'
+    needs: wake
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: recommendship-sync
+            jwks: https://recommendship-api.fly.dev/api/auth/jwks
+          - app: recommendship-staging-sync
+            jwks: https://recommendship-staging-api.fly.dev/api/auth/jwks
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      APP: ${{ matrix.app }}
+      JWKS: ${{ matrix.jwks }}
+    steps:
+      - uses: superfly/flyctl-actions/setup-flyctl@1.5
+      - name: Compact PowerSync storage
+        run: |
+          set -euo pipefail
+          # The image the sync service runs now; the PS_* values mirror fly/sync*.toml [env].
+          image=$(flyctl machine list -a "$APP" --json | jq -r '[.[] | select(.config.metadata.fly_process_group=="app")][0].config.image')
+          id=$(flyctl machine run "$image" compact -a "$APP" --region sjc --vm-memory 1024 --restart no --detach \
+            --metadata purpose=compact --env PS_PORT=8080 --env PS_SSLMODE=verify-full --env PS_JWKS_URI="$JWKS" |
+            sed -n 's/.*Machine ID: \([a-z0-9]*\).*/\1/p')
+          echo "compacting on machine $id ($image)"
+          for _ in $(seq 1 60); do
+            state=$(flyctl machine list -a "$APP" --json | jq -r --arg id "$id" '.[] | select(.id==$id) | .state')
+            [ "$state" = stopped ] && break
+            sleep 10
+          done
+          sleep 10
+          logs=$(flyctl logs -a "$APP" --machine "$id" --no-tail || true)
+          flyctl machine destroy "$id" -a "$APP" --force
+          echo "$logs" | grep -E 'Compacting|compacted|exited' || true
+          echo "$logs" | grep -q 'Successfully compacted storage'

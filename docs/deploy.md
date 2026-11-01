@@ -103,7 +103,7 @@ Machine counts are fixed and `hard_limit` makes overload queue rather than add m
 
 ## Inviting people
 
-Sign-up is invite-only. Emails in `ADMIN_EMAILS` are approved on sign-up and see an **Invites** section on the Account page to create single-use codes. Anyone else can sign in and use the app on their device, but nothing syncs until they redeem a code, or an admin presses **Approve** next to them on the Admin page.
+Sign-up is invite-only unless `OPEN_SIGNUPS_UP_TO` is set (production: 2,000), in which case new accounts are approved automatically until that many are approved, and invites take over after that. Emails in `ADMIN_EMAILS` are approved on sign-up and see an **Invites** section on the Account page to create single-use codes. Anyone else can sign in and use the app on their device, but nothing syncs until they redeem a code, or an admin presses **Approve** next to them on the Admin page.
 
 ## Watching usage
 
@@ -132,3 +132,8 @@ Load test (1 November 2026), PowerSync 1.27 in a container capped like the Fly m
 | 2,000 | all but 2 | ~320 MB | 76 ms |
 
 The connections were idle; lots of people editing at once costs CPU, and Fly's shared CPU is slower under sustained load than this test's full core. Past ~2,000 at once, the next step is splitting PowerSync into one replication machine and several API machines (its all-in-one mode can only run once).
+## Keeping the bill bounded
+
+Worst case, every approved account is full: 10,000 each of items, people and recommendations is about 30,000 rows, roughly 90 MB across the app database and PowerSync's storage (~120 MB with Neon's history). At Neon's $0.35/GB-month that's about $0.04 per full account, so `OPEN_SIGNUPS_UP_TO=2000` caps storage near $85/month. Compute is bounded by the Neon autoscaling maximum (Neon console → compute settings); Fly machine counts are fixed.
+
+PowerSync keeps every change until its storage is compacted. PowerSync Cloud does that daily; self-hosted, the daily workflow (`.github/workflows/keepalive.yml`) runs the image's `compact` command on a one-off machine in each sync app and removes it afterwards. To run it by hand: Actions → Keep replication alive → Run workflow.

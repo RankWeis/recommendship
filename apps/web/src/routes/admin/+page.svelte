@@ -29,6 +29,7 @@
 		today: number;
 		last7Days: number;
 		waiting: number;
+		approved: number;
 		suspended: number;
 		nearLimit: number;
 		customLimits: number;
@@ -36,7 +37,7 @@
 		people: number;
 		recommendations: number;
 		changesToday: number;
-		defaults: { rows: number; changesPerDay: number; newAccountsPerDay: number };
+		defaults: { rows: number; changesPerDay: number; newAccountsPerDay: number; openSignupsUpTo: number };
 	};
 
 	const FILTERS = [
@@ -200,7 +201,13 @@
 				</div>
 			</div>
 			<p class="small muted defaults">
-				Defaults: {fmt(stats.defaults.rows)} each of items, people and recommendations · {fmt(stats.defaults.changesPerDay)} changes a day.
+				{#if stats.defaults.openSignupsUpTo}
+					Open sign-up: new accounts are approved automatically until {fmt(stats.defaults.openSignupsUpTo)} are approved
+					(<b class:full={stats.approved >= stats.defaults.openSignupsUpTo}>{fmt(stats.approved)} now</b>); after that they wait for you.
+				{:else}
+					Invite-only: {fmt(stats.approved)} approved; new accounts wait for an invite or Approve.
+				{/if}
+				<br />Defaults: {fmt(stats.defaults.rows)} each of items, people and recommendations · {fmt(stats.defaults.changesPerDay)} changes a day.
 			</p>
 		{/if}
 
@@ -343,6 +350,11 @@
 
 	.defaults {
 		margin: 0.5rem 0 1rem;
+		line-height: 1.5;
+	}
+
+	.full {
+		color: var(--bad);
 	}
 
 	.controls {

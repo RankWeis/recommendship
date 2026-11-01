@@ -45,7 +45,13 @@ const schema = z.object({
 	/** Most items, people and recommendations (each) one user may store. */
 	ROW_QUOTA: z.coerce.number().int().positive().default(10_000),
 	/** New accounts per UTC day (admins don't count and are never refused). */
-	MAX_NEW_USERS_PER_DAY: z.coerce.number().int().nonnegative().default(1_000),
+	MAX_NEW_USERS_PER_DAY: z.coerce.number().int().nonnegative().default(2_000),
+	/**
+	 * Open sign-up: new accounts are approved automatically while fewer than this many
+	 * accounts are approved; past it, people wait for an invite or an admin's Approve.
+	 * 0 = invite-only. This (with ROW_QUOTA) is what bounds the storage bill.
+	 */
+	OPEN_SIGNUPS_UP_TO: z.coerce.number().int().nonnegative().default(0),
 	/** Built web app to serve (apps/web/build). Unset in dev, where Vite serves it. */
 	STATIC_DIR: z.string().optional()
 });
