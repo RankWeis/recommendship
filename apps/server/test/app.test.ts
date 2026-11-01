@@ -3,7 +3,7 @@
 
 import { PGlite } from '@electric-sql/pglite';
 import * as schema from '@recommendship/schema/pg';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -438,5 +438,58 @@ describe('what sign-in keeps', () => {
 		const account = { id: 'a1', userId: 'carol', providerId: 'google', accountId: '123', accessToken: 'at', idToken: 'eyJ.profile.sig', createdAt: now, updatedAt: now };
 		expect(await hooks.account.create.before(account as never)).toMatchObject({ data: { accessToken: 'at', idToken: null } });
 		expect(await hooks.account.update.before({ idToken: 'eyJ.profile.sig' } as never)).toMatchObject({ data: { idToken: null } });
+	});
+});
+
+describe('deleting your account', () => {
+	const at = '2026-11-01T10:00:00.000Z';
+	const mine = (prefix: string) => [
+		{ ...putItem, id: `${prefix}-item` },
+		{ op: 'PUT', table: 'recommender', id: `${prefix}-jo`, data: { name: 'Jo', created_at: at } },
+		{ op: 'PUT', table: 'recommendation', id: `${prefix}-rec`, data: { item_id: `${prefix}-item`, recommender_id: `${prefix}-jo`, received_at: at } },
+		{ op: 'PUT', table: 'category', id: `${prefix}-cat`, data: { name: 'Podcasts', icon: '🎙', sort_order: 50 } }
+	];
+
+	beforeEach(async () => {
+		// Better Auth's tables, as far as deleting needs them.
+		await db.execute(sql`CREATE TABLE "user" (id text PRIMARY KEY)`);
+		await db.execute(sql`CREATE TABLE session (id text PRIMARY KEY, "userId" text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE)`);
+		await db.execute(sql`INSERT INTO "user" VALUES ('alice'), ('admin')`);
+		await db.execute(sql`INSERT INTO session VALUES ('s-alice', 'alice'), ('s-admin', 'admin')`);
+		const { code } = await (await call('admin', 'POST', '/api/invites', {})).json();
+		await call('alice', 'POST', '/api/invites/redeem', { code });
+		expect(await (await call('alice', 'POST', '/api/write', { ops: mine('a') })).json()).toMatchObject({ applied: 4 });
+		expect(await (await call('admin', 'POST', '/api/write', { ops: mine('b') })).json()).toMatchObject({ applied: 4 });
+	});
+
+	const count = async (q: ReturnType<typeof sql>) => Number(((await db.execute(q)).rows[0] as { n: number }).n);
+
+	it('needs DELETE typed out', async () => {
+		expect((await call('alice', 'DELETE', '/api/account')).status).toBe(400);
+		expect((await call('alice', 'DELETE', '/api/account', { confirm: 'delete' })).status).toBe(400);
+		expect(await count(sql`SELECT count(*)::int AS n FROM item WHERE user_id = 'alice'`)).toBe(1);
+	});
+
+	it('deletes everything of yours and nothing of anyone else', async () => {
+		expect(await (await call('alice', 'DELETE', '/api/account', { confirm: 'DELETE' })).json()).toEqual({ deleted: true });
+
+		for (const table of ['item', 'recommender', 'recommendation', 'category', 'write_usage']) {
+			expect(await count(sql`SELECT count(*)::int AS n FROM ${sql.identifier(table)} WHERE user_id = 'alice'`), table).toBe(0);
+			expect(await count(sql`SELECT count(*)::int AS n FROM ${sql.identifier(table)} WHERE user_id = 'admin'`), table).toBeGreaterThan(0);
+		}
+		expect(await count(sql`SELECT count(*)::int AS n FROM edit_clock WHERE row_id LIKE 'a-%'`)).toBe(0);
+		expect(await count(sql`SELECT count(*)::int AS n FROM edit_clock WHERE row_id LIKE 'b-%'`)).toBe(4);
+		expect(await count(sql`SELECT count(*)::int AS n FROM app_user WHERE id = 'alice'`)).toBe(0);
+		expect(await count(sql`SELECT count(*)::int AS n FROM "user" WHERE id = 'alice'`)).toBe(0);
+		expect(await count(sql`SELECT count(*)::int AS n FROM session WHERE "userId" = 'alice'`)).toBe(0);
+		expect(await count(sql`SELECT count(*)::int AS n FROM session`)).toBe(1);
+		// The invite Alice used stays used, without pointing at her.
+		expect(await count(sql`SELECT count(*)::int AS n FROM invite WHERE used_at IS NOT NULL AND used_by IS NULL`)).toBe(1);
+	});
+
+	it("won't let a suspended account delete itself", async () => {
+		await call('admin', 'POST', '/api/admin/users/alice/suspend', {});
+		expect((await call('alice', 'DELETE', '/api/account', { confirm: 'DELETE' })).status).toBe(403);
+		expect(await count(sql`SELECT count(*)::int AS n FROM app_user WHERE id = 'alice'`)).toBe(1);
 	});
 });

@@ -3,7 +3,8 @@
 	import { planBackupImport, readBackup, writeImport } from '#lib/actions.ts';
 	import { parseBackup, toCsv } from '#lib/backup.ts';
 	import { FEEDBACK, relativeDate } from '#lib/format.ts';
-	import { account, devSignIn, redeemInvite, signInWithGoogle, signOut } from '#lib/sync.svelte.ts';
+	import Sheet from '#lib/components/Sheet.svelte';
+	import { account, deleteAccount, devSignIn, redeemInvite, signInWithGoogle, signOut } from '#lib/sync.svelte.ts';
 	import { toast } from '#lib/toast.svelte.ts';
 
 	let email = $state('dev@recommendship.test');
@@ -153,6 +154,34 @@
 			if (discard) await signOut({ discardUnsynced: true });
 		} finally {
 			signingOut = false;
+		}
+	}
+
+	// ---- Deleting the account: a sheet that only goes ahead once DELETE is typed. ----
+
+	let deleteOpen = $state(false);
+	let deleteTyped = $state('');
+	let deleting = $state(false);
+	let deleteError = $state('');
+
+	function openDelete() {
+		deleteTyped = '';
+		deleteError = '';
+		deleteOpen = true;
+	}
+
+	async function confirmDelete() {
+		if (deleteTyped !== 'DELETE') return;
+		deleting = true;
+		deleteError = '';
+		try {
+			await deleteAccount();
+			deleteOpen = false;
+			toast('Your account and everything in it were deleted');
+		} catch (e) {
+			deleteError = e instanceof Error ? e.message : String(e);
+		} finally {
+			deleting = false;
 		}
 	}
 
@@ -332,6 +361,41 @@
 				<span aria-hidden="true">›</span>
 			</a>
 		{/if}
+
+		<h2 class="section-title">Delete account</h2>
+		<div class="card panel">
+			<p class="small muted">Deletes your account and everything you've logged, on every device. It can't be undone.</p>
+			<div><button class="btn danger-btn" onclick={openDelete}>Delete account…</button></div>
+		</div>
+
+		<Sheet open={deleteOpen} onclose={() => !deleting && (deleteOpen = false)} label="Delete your account">
+			<form
+				class="delete"
+				onsubmit={(e) => {
+					e.preventDefault();
+					void confirmDelete();
+				}}
+			>
+				<h2>Delete your account?</h2>
+				<p><b>This is irreversible.</b> Your account and everything you've logged (items, people, ratings, reviews and notes) are deleted from Recommendship's servers and from this device. Nobody can get them back, including me.</p>
+				<p class="small muted">Want a copy? Close this and use Download backup first. Any other device you've signed in on stops syncing; sign out there to remove its copy.</p>
+				<label class="small" for="delete-confirm">To continue, type <b class="num">DELETE</b></label>
+				<input
+					id="delete-confirm"
+					class="field"
+					bind:value={deleteTyped}
+					autocomplete="off"
+					autocapitalize="characters"
+					spellcheck="false"
+					disabled={deleting}
+				/>
+				{#if deleteError}<p class="error small">{deleteError}</p>{/if}
+				<div class="row end">
+					<button type="button" class="btn ghost" disabled={deleting} onclick={() => (deleteOpen = false)}>Cancel</button>
+					<button class="btn danger-btn solid" disabled={deleteTyped !== 'DELETE' || deleting}>{deleting ? 'Deleting…' : 'Delete my account'}</button>
+				</div>
+			</form>
+		</Sheet>
 	{/if}
 
 	{#if signInError && !account.me}<p class="error">{signInError}</p>{/if}
@@ -436,6 +500,32 @@
 
 	.danger:hover {
 		color: var(--bad);
+	}
+
+	.danger-btn {
+		color: var(--bad);
+		border-color: color-mix(in srgb, var(--bad) 45%, transparent);
+	}
+
+	.danger-btn.solid {
+		background: var(--bad);
+		border-color: var(--bad);
+		color: #fff;
+	}
+
+	.danger-btn.solid:disabled {
+		opacity: 0.45;
+	}
+
+	.delete {
+		display: flex;
+		flex-direction: column;
+		gap: 0.7rem;
+		padding-bottom: 0.5rem;
+	}
+
+	.row.end {
+		justify-content: flex-end;
 	}
 
 	.sync-error {

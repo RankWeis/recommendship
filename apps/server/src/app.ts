@@ -20,9 +20,9 @@
 //   POST /api/admin/users/:id/unsuspend   admin: restore access
 //   GET  /healthz
 
-import { appUser, category, invite, item, recommendation, recommender, suspension, userLimits, writeUsage } from '@recommendship/schema/pg';
+import { appUser, category, editClock, invite, item, recommendation, recommender, suspension, userLimits, writeUsage } from '@recommendship/schema/pg';
 import { randomBytes } from 'node:crypto';
-import { and, count, desc, eq, gte, ilike, isNull, or, sql, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, gte, ilike, inArray, isNull, or, sql, type SQL } from 'drizzle-orm';
 import { Hono, type Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
@@ -484,6 +484,38 @@ export function createApp({
 			await tx.update(appUser).set({ approvedAt: new Date().toISOString() }).where(eq(appUser.id, id));
 		});
 		return c.json({ suspended: false });
+	});
+
+	// Deletes your account and everything in it, for good. The body must say DELETE, so a
+	// stray request can't do it. A suspended account can't delete itself (that would let it
+	// sign up again fresh); it's deleted on request instead.
+	app.delete('/api/account', async (c) => {
+		const body = z.object({ confirm: z.literal('DELETE') }).safeParse(await c.req.json().catch(() => ({})));
+		if (!body.success) return c.json({ error: 'type DELETE to confirm' }, 400);
+		if (c.get('suspended')) return c.json({ error: 'this account is suspended; email kian.samii@gmail.com to have it deleted' }, 403);
+		const id = c.get('session').user.id;
+
+		await db.transaction(async (tx) => {
+			for (const [table, t] of [
+				['recommendation', recommendation],
+				['item', item],
+				['recommender', recommender],
+				['category', category]
+			] as const) {
+				const mine = tx.select({ id: t.id }).from(t).where(eq(t.userId, id));
+				await tx.delete(editClock).where(and(eq(editClock.tableName, table), inArray(editClock.rowId, mine)));
+				await tx.delete(t).where(eq(t.userId, id));
+			}
+			await tx.delete(writeUsage).where(eq(writeUsage.userId, id));
+			await tx.delete(userLimits).where(eq(userLimits.userId, id));
+			// The code stays used; it just no longer points at anyone.
+			await tx.update(invite).set({ usedBy: null }).where(eq(invite.usedBy, id));
+			await tx.delete(appUser).where(eq(appUser.id, id));
+			// Better Auth's own tables: sessions and the Google link go with the user row.
+			await tx.execute(sql`DELETE FROM "user" WHERE id = ${id}`);
+		});
+		console.warn('account deleted', id);
+		return c.json({ deleted: true });
 	});
 
 	app.all('/api/*', (c) => c.json({ error: 'not found' }, 404));
