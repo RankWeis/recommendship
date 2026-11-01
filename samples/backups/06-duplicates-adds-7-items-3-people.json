@@ -1,0 +1,277 @@
+{
+	"format": "recommendship-backup",
+	"version": 1,
+	"exported_at": "2026-11-01T12:00:00.000Z",
+	"categories": [
+		{
+			"id": "c-wine",
+			"name": "Wine",
+			"icon": "🍷",
+			"external_source": "NONE",
+			"sort_order": 100
+		},
+		{
+			"id": "c-movie-again",
+			"name": "movie",
+			"icon": "🎞️",
+			"external_source": "NONE",
+			"sort_order": 100
+		},
+		{
+			"id": "c-board",
+			"name": "Board games",
+			"icon": "🎲",
+			"external_source": "NONE",
+			"sort_order": 110
+		}
+	],
+	"people": [
+		{
+			"id": "p-004ao",
+			"name": "Sam",
+			"notes": null,
+			"created_at": "2025-01-23T14:48:30.541Z"
+		},
+		{
+			"id": "p-004ap",
+			"name": "sam",
+			"notes": null,
+			"created_at": "2025-04-18T02:59:11.777Z"
+		},
+		{
+			"id": "p-004aq",
+			"name": " SAM ",
+			"notes": null,
+			"created_at": "2026-08-16T16:31:43.552Z"
+		},
+		{
+			"id": "p-004ar",
+			"name": "Jo",
+			"notes": null,
+			"created_at": "2025-04-17T20:18:06.670Z"
+		},
+		{
+			"id": "p-004as",
+			"name": "Nobody Recommended Anything",
+			"notes": null,
+			"created_at": "2025-06-05T13:58:34.511Z"
+		}
+	],
+	"items": [
+		{
+			"id": "i-004at",
+			"category_id": "cat-tv",
+			"title": "Severance",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2025-03-04T14:56:37.485Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-004au",
+			"category_id": "cat-tv",
+			"title": "severance",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2026-04-05T06:26:26.511Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-004av",
+			"category_id": "cat-book",
+			"title": "Severance",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2024-12-06T11:14:56.658Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-004aw",
+			"category_id": "c-wine",
+			"title": "Barolo 2016",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2025-08-30T10:00:44.934Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-004ax",
+			"category_id": "c-movie-again",
+			"title": "Heat",
+			"status": "TRIED",
+			"rating": 1,
+			"rated_at": "2026-10-24T13:54:54.549Z",
+			"review": null,
+			"added_at": "2026-03-25T13:14:08.062Z",
+			"tried_at": "2026-10-24T13:54:54.549Z"
+		},
+		{
+			"id": "i-004ay",
+			"category_id": "c-board",
+			"title": "Wingspan",
+			"status": "TRIED",
+			"rating": 2.5,
+			"rated_at": "2025-08-16T10:21:56.568Z",
+			"review": null,
+			"added_at": "2025-05-26T12:12:46.236Z",
+			"tried_at": "2025-08-16T10:21:56.568Z"
+		},
+		{
+			"id": "i-004az",
+			"category_id": "c-missing",
+			"title": "Lost in a type the file never defined",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2025-03-18T05:44:59.159Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-004b0",
+			"category_id": "cat-movie",
+			"title": "Dune",
+			"status": "TRIED",
+			"rating": 2,
+			"rated_at": "2026-08-31T10:56:58.690Z",
+			"review": null,
+			"added_at": "2026-06-01T12:27:38.127Z",
+			"tried_at": "2026-08-31T10:56:58.690Z",
+			"external_source": "TMDB_MOVIE",
+			"external_id": "438631",
+			"year": 2021
+		},
+		{
+			"id": "i-004b1",
+			"category_id": "cat-movie",
+			"title": "Dune (typed differently)",
+			"status": "TRIED",
+			"rating": 1,
+			"rated_at": "2026-08-14T00:04:53.101Z",
+			"review": null,
+			"added_at": "2026-06-14T16:53:46.866Z",
+			"tried_at": "2026-08-14T00:04:53.101Z",
+			"external_source": "TMDB_MOVIE",
+			"external_id": "438631",
+			"year": 2021
+		}
+	],
+	"recommendations": [
+		{
+			"id": "r-004b2",
+			"item_id": "i-004at",
+			"recommender_id": "p-004ao",
+			"received_at": "2025-03-04T14:56:37.485Z",
+			"channel": null,
+			"enthusiasm": null,
+			"note": null
+		},
+		{
+			"id": "r-004b3",
+			"item_id": "i-004at",
+			"recommender_id": "p-004ap",
+			"received_at": "2025-03-04T14:56:37.485Z",
+			"channel": null,
+			"enthusiasm": 3,
+			"note": null
+		},
+		{
+			"id": "r-004b4",
+			"item_id": "i-004au",
+			"recommender_id": "p-004aq",
+			"received_at": "2026-04-05T06:26:26.511Z",
+			"channel": null,
+			"enthusiasm": 1,
+			"note": null
+		},
+		{
+			"id": "r-004b5",
+			"item_id": "i-004av",
+			"recommender_id": "p-004ar",
+			"received_at": "2024-12-06T11:14:56.658Z",
+			"channel": null,
+			"enthusiasm": 3,
+			"note": null
+		},
+		{
+			"id": "r-004b6",
+			"item_id": "i-004aw",
+			"recommender_id": "p-004ar",
+			"received_at": "2025-08-30T10:00:44.934Z",
+			"channel": "OTHER",
+			"enthusiasm": null,
+			"note": null
+		},
+		{
+			"id": "r-004b7",
+			"item_id": "i-004ax",
+			"recommender_id": "p-004ao",
+			"received_at": "2026-03-25T13:14:08.062Z",
+			"channel": null,
+			"enthusiasm": 3,
+			"note": null
+		},
+		{
+			"id": "r-004b8",
+			"item_id": "i-004ay",
+			"recommender_id": "p-004ar",
+			"received_at": "2025-05-26T12:12:46.236Z",
+			"channel": "IN_PERSON",
+			"enthusiasm": null,
+			"note": null
+		},
+		{
+			"id": "r-004b9",
+			"item_id": "i-004az",
+			"recommender_id": "p-004ao",
+			"received_at": "2025-03-18T05:44:59.159Z",
+			"channel": "PODCAST",
+			"enthusiasm": 3,
+			"note": null
+		},
+		{
+			"id": "r-004ba",
+			"item_id": "i-004b0",
+			"recommender_id": "p-004ao",
+			"received_at": "2026-06-01T12:27:38.127Z",
+			"channel": "PODCAST",
+			"enthusiasm": null,
+			"note": null
+		},
+		{
+			"id": "r-004bb",
+			"item_id": "i-004b1",
+			"recommender_id": "p-004ar",
+			"received_at": "2026-06-14T16:53:46.866Z",
+			"channel": null,
+			"enthusiasm": null,
+			"note": null
+		},
+		{
+			"id": "r-004bc",
+			"item_id": "i-not-in-file",
+			"recommender_id": "p-004ar",
+			"received_at": "2025-03-04T14:56:37.485Z",
+			"channel": null,
+			"enthusiasm": null,
+			"note": null
+		},
+		{
+			"id": "r-004bd",
+			"item_id": "i-004at",
+			"recommender_id": "p-not-in-file",
+			"received_at": "2025-03-04T14:56:37.485Z",
+			"channel": null,
+			"enthusiasm": 1,
+			"note": null
+		}
+	]
+}

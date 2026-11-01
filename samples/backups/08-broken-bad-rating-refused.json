@@ -1,0 +1,21 @@
+{
+	"format": "recommendship-backup",
+	"version": 1,
+	"exported_at": "2026-11-01T12:00:00.000Z",
+	"categories": [],
+	"people": [],
+	"items": [
+		{
+			"id": "i-004bf",
+			"category_id": "cat-movie",
+			"title": "Rated 4.3",
+			"status": "TRIED",
+			"rating": 4.3,
+			"rated_at": "2026-08-26T18:16:05.620Z",
+			"review": null,
+			"added_at": "2025-08-04T02:03:53.431Z",
+			"tried_at": "2026-08-26T18:16:05.620Z"
+		}
+	],
+	"recommendations": []
+}

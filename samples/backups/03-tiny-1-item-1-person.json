@@ -1,0 +1,40 @@
+{
+	"format": "recommendship-backup",
+	"version": 1,
+	"exported_at": "2026-11-01T12:00:00.000Z",
+	"categories": [],
+	"people": [
+		{
+			"id": "p-0002j",
+			"name": "Sam",
+			"notes": null,
+			"created_at": "2025-02-12T22:21:18.481Z"
+		}
+	],
+	"items": [
+		{
+			"id": "i-0002k",
+			"category_id": "cat-book",
+			"title": "Piranesi",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2025-04-13T04:30:45.281Z",
+			"tried_at": null,
+			"year": 2020,
+			"creator": "Susanna Clarke"
+		}
+	],
+	"recommendations": [
+		{
+			"id": "r-0002l",
+			"item_id": "i-0002k",
+			"recommender_id": "p-0002j",
+			"received_at": "2025-04-13T04:30:45.281Z",
+			"channel": "SOCIAL",
+			"enthusiasm": 3,
+			"note": "Read it in one sitting"
+		}
+	]
+}

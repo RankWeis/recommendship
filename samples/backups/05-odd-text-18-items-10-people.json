@@ -1,0 +1,438 @@
+{
+	"format": "recommendship-backup",
+	"version": 1,
+	"exported_at": "2026-11-01T12:00:00.000Z",
+	"categories": [],
+	"people": [
+		{
+			"id": "p-0049e",
+			"name": "Zoë",
+			"notes": null,
+			"created_at": "2025-11-13T06:39:17.974Z"
+		},
+		{
+			"id": "p-0049f",
+			"name": "Seán O'Brien-Ní Mhaoláin",
+			"notes": null,
+			"created_at": "2026-07-28T03:40:41.005Z"
+		},
+		{
+			"id": "p-0049g",
+			"name": "👩‍🍳 Chef Mo",
+			"notes": null,
+			"created_at": "2024-10-06T11:18:09.638Z"
+		},
+		{
+			"id": "p-0049h",
+			"name": "محمد",
+			"notes": null,
+			"created_at": "2026-01-26T10:51:46.746Z"
+		},
+		{
+			"id": "p-0049i",
+			"name": "אבי",
+			"notes": null,
+			"created_at": "2024-12-10T07:26:28.828Z"
+		},
+		{
+			"id": "p-0049j",
+			"name": "李小龙",
+			"notes": null,
+			"created_at": "2025-03-10T06:22:29.016Z"
+		},
+		{
+			"id": "p-0049k",
+			"name": "   Padded Name   ",
+			"notes": null,
+			"created_at": "2025-06-12T03:20:01.629Z"
+		},
+		{
+			"id": "p-0049l",
+			"name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+			"notes": null,
+			"created_at": "2026-04-22T13:32:15.207Z"
+		},
+		{
+			"id": "p-0049m",
+			"name": "<b>Not bold</b>",
+			"notes": null,
+			"created_at": "2025-04-04T03:49:24.323Z"
+		},
+		{
+			"id": "p-0049n",
+			"name": "=HYPERLINK(\"http://example.com\",\"click\")",
+			"notes": null,
+			"created_at": "2025-10-14T12:23:18.053Z"
+		}
+	],
+	"items": [
+		{
+			"id": "i-0049o",
+			"category_id": "cat-movie",
+			"title": "Amélie",
+			"status": "TRIED",
+			"rating": 4.5,
+			"rated_at": "2026-05-23T11:33:58.013Z",
+			"review": "Charming, \"whimsical\", and — honestly — perfect.\nSecond line of the review.",
+			"added_at": "2026-03-06T09:02:06.279Z",
+			"tried_at": "2026-05-23T11:33:58.013Z"
+		},
+		{
+			"id": "i-0049p",
+			"category_id": "cat-movie",
+			"title": "千と千尋の神隠し",
+			"status": "DISMISSED",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2025-02-15T15:35:44.916Z",
+			"tried_at": null,
+			"year": 2001,
+			"creator": "宮崎駿"
+		},
+		{
+			"id": "i-0049q",
+			"category_id": "cat-book",
+			"title": "مئة عام من العزلة",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2025-06-29T01:08:25.011Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-0049r",
+			"category_id": "cat-restaurant",
+			"title": "🍜 Ramen Nagi",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2025-04-23T07:36:17.987Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-0049s",
+			"category_id": "cat-book",
+			"title": "An Extraordinarily Long Title That Keeps Going An Extraordinarily Long Title That Keeps Going An Extraordinarily Long Title That Keeps Going An Extraordinarily Long Title That Keeps Going An Extraordinarily Long Title That Keeps Going An Extraordinarily Long Title That Keeps Going An Extraordinarily",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2024-12-19T15:21:58.080Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-0049t",
+			"category_id": "cat-other",
+			"title": "=1+1",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2026-02-04T04:06:38.318Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-0049u",
+			"category_id": "cat-other",
+			"title": "@SUM(A1:A9)",
+			"status": "TRIED",
+			"rating": 2.5,
+			"rated_at": "2026-07-21T04:17:44.155Z",
+			"review": null,
+			"added_at": "2026-06-15T07:32:36.958Z",
+			"tried_at": "2026-07-21T04:17:44.155Z"
+		},
+		{
+			"id": "i-0049v",
+			"category_id": "cat-other",
+			"title": "<script>alert(\"hi\")</script>",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2026-09-08T11:55:29.800Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-0049w",
+			"category_id": "cat-tv",
+			"title": "Title, with, commas",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2025-09-18T20:57:38.315Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-0049x",
+			"category_id": "cat-podcast",
+			"title": "   Spaces around   ",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2025-08-08T13:55:40.067Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-0049y",
+			"category_id": "cat-restaurant",
+			"title": "Ünïcödé Çàfé",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2026-09-25T01:21:10.318Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-0049z",
+			"category_id": "cat-movie",
+			"title": "Poster that 404s",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2025-04-02T11:21:56.766Z",
+			"tried_at": null,
+			"image_url": "https://image.tmdb.org/t/p/w185/does-not-exist.jpg",
+			"external_source": "TMDB_MOVIE",
+			"external_id": "999999999",
+			"year": 2099
+		},
+		{
+			"id": "i-004a0",
+			"category_id": "cat-game",
+			"title": "Rated the lowest",
+			"status": "TRIED",
+			"rating": 1,
+			"rated_at": "2026-06-17T17:58:46.802Z",
+			"review": null,
+			"added_at": "2026-05-01T23:45:24.135Z",
+			"tried_at": "2026-06-17T17:58:46.802Z"
+		},
+		{
+			"id": "i-004a1",
+			"category_id": "cat-game",
+			"title": "Rated the highest",
+			"status": "TRIED",
+			"rating": 5,
+			"rated_at": "2026-10-31T23:07:11.496Z",
+			"review": null,
+			"added_at": "2026-07-29T11:06:36.669Z",
+			"tried_at": "2026-10-31T23:07:11.496Z"
+		},
+		{
+			"id": "i-004a2",
+			"category_id": "cat-music",
+			"title": "Tried but never rated",
+			"status": "TRIED",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "2025-01-23T09:41:34.877Z",
+			"tried_at": "2025-09-10T00:50:15.544Z"
+		},
+		{
+			"id": "i-004a3",
+			"category_id": "cat-music",
+			"title": "Dismissed after rating",
+			"status": "DISMISSED",
+			"rating": 2.5,
+			"rated_at": "2026-10-28T17:28:05.538Z",
+			"review": null,
+			"added_at": "2026-04-13T12:36:19.824Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-004a4",
+			"category_id": "cat-book",
+			"title": "Added in 1999",
+			"status": "TO_TRY",
+			"rating": null,
+			"rated_at": null,
+			"review": null,
+			"added_at": "1999-12-31T23:59:00.000Z",
+			"tried_at": null
+		},
+		{
+			"id": "i-004a5",
+			"category_id": "cat-book",
+			"title": "Added in the future",
+			"status": "TRIED",
+			"rating": 3.5,
+			"rated_at": "2026-10-01T20:20:55.118Z",
+			"review": null,
+			"added_at": "2030-01-01T00:00:00.000Z",
+			"tried_at": "2026-10-01T20:20:55.118Z"
+		}
+	],
+	"recommendations": [
+		{
+			"id": "r-004a6",
+			"item_id": "i-0049o",
+			"recommender_id": "p-0049e",
+			"received_at": "2026-03-06T09:02:06.279Z",
+			"channel": null,
+			"enthusiasm": null,
+			"note": "Quote: \"see it\", comma, and a\nnewline"
+		},
+		{
+			"id": "r-004a7",
+			"item_id": "i-0049p",
+			"recommender_id": "p-0049f",
+			"received_at": "2025-02-15T15:35:44.916Z",
+			"channel": "OTHER",
+			"enthusiasm": 1,
+			"note": null
+		},
+		{
+			"id": "r-004a8",
+			"item_id": "i-0049q",
+			"recommender_id": "p-0049g",
+			"received_at": "2025-06-29T01:08:25.011Z",
+			"channel": "PODCAST",
+			"enthusiasm": 2,
+			"note": null
+		},
+		{
+			"id": "r-004a9",
+			"item_id": "i-0049r",
+			"recommender_id": "p-0049h",
+			"received_at": "2025-04-23T07:36:17.987Z",
+			"channel": null,
+			"enthusiasm": 3,
+			"note": null
+		},
+		{
+			"id": "r-004aa",
+			"item_id": "i-0049s",
+			"recommender_id": "p-0049i",
+			"received_at": "2024-12-19T15:21:58.080Z",
+			"channel": null,
+			"enthusiasm": null,
+			"note": "NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN"
+		},
+		{
+			"id": "r-004ab",
+			"item_id": "i-0049t",
+			"recommender_id": "p-0049j",
+			"received_at": "2026-02-04T04:06:38.318Z",
+			"channel": null,
+			"enthusiasm": 1,
+			"note": null
+		},
+		{
+			"id": "r-004ac",
+			"item_id": "i-0049u",
+			"recommender_id": "p-0049k",
+			"received_at": "2026-06-15T07:32:36.958Z",
+			"channel": "IN_PERSON",
+			"enthusiasm": 2,
+			"note": null
+		},
+		{
+			"id": "r-004ad",
+			"item_id": "i-0049v",
+			"recommender_id": "p-0049l",
+			"received_at": "2026-09-08T11:55:29.800Z",
+			"channel": null,
+			"enthusiasm": 3,
+			"note": null
+		},
+		{
+			"id": "r-004ae",
+			"item_id": "i-0049w",
+			"recommender_id": "p-0049m",
+			"received_at": "2025-09-18T20:57:38.315Z",
+			"channel": null,
+			"enthusiasm": null,
+			"note": null
+		},
+		{
+			"id": "r-004af",
+			"item_id": "i-0049x",
+			"recommender_id": "p-0049n",
+			"received_at": "2025-08-08T13:55:40.067Z",
+			"channel": null,
+			"enthusiasm": 1,
+			"note": null
+		},
+		{
+			"id": "r-004ag",
+			"item_id": "i-0049y",
+			"recommender_id": "p-0049e",
+			"received_at": "2026-09-25T01:21:10.318Z",
+			"channel": "SOCIAL",
+			"enthusiasm": 2,
+			"note": null
+		},
+		{
+			"id": "r-004ah",
+			"item_id": "i-0049z",
+			"recommender_id": "p-0049f",
+			"received_at": "2025-04-02T11:21:56.766Z",
+			"channel": "SOCIAL",
+			"enthusiasm": 3,
+			"note": null
+		},
+		{
+			"id": "r-004ai",
+			"item_id": "i-004a0",
+			"recommender_id": "p-0049g",
+			"received_at": "2026-05-01T23:45:24.135Z",
+			"channel": null,
+			"enthusiasm": null,
+			"note": null
+		},
+		{
+			"id": "r-004aj",
+			"item_id": "i-004a1",
+			"recommender_id": "p-0049h",
+			"received_at": "2026-07-29T11:06:36.669Z",
+			"channel": null,
+			"enthusiasm": 1,
+			"note": null
+		},
+		{
+			"id": "r-004ak",
+			"item_id": "i-004a2",
+			"recommender_id": "p-0049i",
+			"received_at": "2025-01-23T09:41:34.877Z",
+			"channel": "PODCAST",
+			"enthusiasm": 2,
+			"note": null
+		},
+		{
+			"id": "r-004al",
+			"item_id": "i-004a3",
+			"recommender_id": "p-0049j",
+			"received_at": "2026-04-13T12:36:19.824Z",
+			"channel": null,
+			"enthusiasm": 3,
+			"note": null
+		},
+		{
+			"id": "r-004am",
+			"item_id": "i-004a4",
+			"recommender_id": "p-0049k",
+			"received_at": "1999-12-31T23:59:00.000Z",
+			"channel": "OTHER",
+			"enthusiasm": null,
+			"note": null
+		},
+		{
+			"id": "r-004an",
+			"item_id": "i-004a5",
+			"recommender_id": "p-0049l",
+			"received_at": "2030-01-01T00:00:00.000Z",
+			"channel": null,
+			"enthusiasm": 1,
+			"note": null
+		}
+	]
+}
