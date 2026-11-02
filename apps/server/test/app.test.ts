@@ -392,6 +392,36 @@ describe('open sign-up', () => {
 		await call('admin', 'POST', '/api/admin/users/alice/suspend', {});
 		expect(await openSeat(db as unknown as Db, open(2))).toBe(true);
 	});
+
+	// What a sign-up actually goes through: Better Auth's after-create hook, then sync.
+	const signUp = async (e: typeof env, id: string) => {
+		const now = new Date();
+		users[id] = { id, email: `${id}@example.com`, name: id };
+		const hooks = authOptions(e, {} as never, db as unknown as Db).databaseHooks;
+		await hooks.user.create.after({ ...users[id]!, emailVerified: true, image: null, createdAt: now, updatedAt: now } as never);
+		return {
+			me: await (await call(id, 'GET', '/api/me')).json(),
+			credentials: (await call(id, 'GET', '/api/sync/credentials')).status
+		};
+	};
+
+	it('lets a new account sync with no invite while open, and is invite-only by default', async () => {
+		expect(await signUp(env, 'carol')).toEqual({ me: expect.objectContaining({ approved: false }), credentials: 403 });
+		expect(await signUp({ ...env, OPEN_SIGNUPS_UP_TO: 10 }, 'dave')).toEqual({ me: expect.objectContaining({ approved: true }), credentials: 200 });
+	});
+
+	it('falls back to invites and Approve once the open seats are taken', async () => {
+		// The admin holds the only seat, so the next sign-up waits.
+		const full = { ...env, OPEN_SIGNUPS_UP_TO: 1 };
+		expect((await signUp(full, 'erin')).credentials).toBe(403);
+		const { code } = await (await call('admin', 'POST', '/api/invites', {})).json();
+		expect(await (await call('erin', 'POST', '/api/invites/redeem', { code })).json()).toEqual({ approved: true });
+		expect((await call('erin', 'GET', '/api/sync/credentials')).status).toBe(200);
+
+		expect((await signUp(full, 'frank')).credentials).toBe(403);
+		expect((await call('admin', 'POST', '/api/admin/users/frank/approve', {})).status).toBe(200);
+		expect((await call('frank', 'GET', '/api/sync/credentials')).status).toBe(200);
+	});
 });
 
 describe('canonical address', () => {
