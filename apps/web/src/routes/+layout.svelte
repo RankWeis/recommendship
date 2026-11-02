@@ -98,6 +98,10 @@
 			{#each tabs as t (t.href)}
 				<a href={t.href} class:active={isActive(t.href)} aria-current={isActive(t.href) ? 'page' : undefined}>{t.label}</a>
 			{/each}
+			{#if !infoPage && status === 'ready' && !ui.selecting}
+				<!-- Desktop only (see .add below): on a tall window the corner button sits far below the list. -->
+				<button class="add" onclick={() => (ui.quickAddOpen = true)} aria-label="Add a recommendation" title="Add (n)">＋ Add</button>
+			{/if}
 			<button class="help" aria-label="What is Recommendship?" title="What is this?" aria-expanded={ui.aboutOpen} onclick={() => (ui.aboutOpen = true)}
 				>?</button
 			>
@@ -280,6 +284,32 @@
 		font-size: 1.8rem;
 		box-shadow: var(--shadow);
 		z-index: 35;
+	}
+
+	.add {
+		display: none;
+		align-self: center;
+		border: none;
+		border-radius: 999px;
+		padding: 0.35rem 0.8rem;
+		margin-left: 0.3rem;
+		background: var(--accent);
+		color: var(--accent-ink);
+		font-weight: 700;
+		font-size: 0.92rem;
+		white-space: nowrap;
+	}
+
+	/* Desktop (a mouse and room in the header): Add lives in the sticky header, next to the
+	   content, instead of floating in the window's bottom corner. Touch screens keep the FAB. */
+	@media (min-width: 720px) and (hover: hover) and (pointer: fine) {
+		.add {
+			display: inline-block;
+		}
+
+		.fab {
+			display: none;
+		}
 	}
 
 	/* Phones, Pro Max sizes (430–440 px) included: the full-size header needs about 460 px. */
