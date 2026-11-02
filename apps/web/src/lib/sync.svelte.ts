@@ -6,6 +6,9 @@
 import type { AbstractPowerSyncDatabase, PowerSyncBackendConnector, PowerSyncCredentials } from '@powersync/web';
 import { db, releaseDb } from './db';
 import { toast } from './toast.svelte';
+import { syncState, type CredentialsRefusal, type SyncState } from './sync-state';
+
+export type { SyncState };
 
 export interface Me {
 	user: { id: string; email: string; name: string };
@@ -15,8 +18,6 @@ export interface Me {
 	/** This person's limits (an admin can set their own); null = no limit. */
 	limits?: { rows: number | null; changesPerDay: number | null };
 }
-
-export type SyncState = 'local' | 'pending' | 'offline' | 'syncing' | 'synced' | 'error';
 
 export const account = $state({
 	/** null = not signed in; undefined = not known yet. */
@@ -52,11 +53,16 @@ function cachedMe(): Me | null {
 	}
 }
 
+/** Set when the server refused sync credentials, so the status says why instead of "Offline". */
+let refusal: CredentialsRefusal = null;
+
 class Connector implements PowerSyncBackendConnector {
 	async fetchCredentials(): Promise<PowerSyncCredentials | null> {
 		const res = await fetch('/api/sync/credentials');
 		// Signed out or not approved: no connection until that changes.
-		if (res.status === 401 || res.status === 403) return null;
+		refusal = res.status === 401 ? 'signed-out' : res.status === 403 ? 'not-approved' : null;
+		queueMicrotask(updateStatus);
+		if (refusal) return null;
 		if (!res.ok) throw new Error(`credentials: HTTP ${res.status}`);
 		return (await res.json()) as PowerSyncCredentials;
 	}
@@ -109,20 +115,21 @@ function updateStatus() {
 	// upload, they don't fail it: PowerSync retries and the queue drains a minute at a time.
 	const paced = !!uploadError && PACED.test(uploadError.message);
 	account.syncNote = paced ? 'Uploading in batches, a minute at a time. Keep the app open until it says Synced.' : null;
-	account.syncError = paced
-		? null
-		: uploadError
-		? `Upload: ${uploadError.message}`
-		: downloadError
-			? `Download: ${downloadError.message}`
-			: null;
-	if (!account.me) account.sync = 'local';
-	else if (!account.me.approved) account.sync = 'pending';
-	// No signal is the common case, not an error; the browser knows before PowerSync does.
-	else if (!navigator.onLine || !s.connected) account.sync = 'offline';
-	else if ((uploadError && !paced) || downloadError) account.sync = 'error';
-	else if (paced || s.dataFlowStatus.uploading || s.dataFlowStatus.downloading || !s.hasSynced) account.sync = 'syncing';
-	else account.sync = 'synced';
+	const { state, error } = syncState({
+		me: account.me,
+		online: navigator.onLine,
+		connected: s.connected,
+		connecting: s.connecting,
+		hasSynced: !!s.hasSynced,
+		uploading: s.dataFlowStatus.uploading,
+		downloading: s.dataFlowStatus.downloading,
+		uploadError,
+		downloadError,
+		paced,
+		refusal
+	});
+	account.sync = state;
+	account.syncError = error;
 }
 
 async function refreshQueue() {
@@ -177,6 +184,7 @@ export async function refreshSession() {
 	const me = await fetchMe();
 	account.me = me === 'offline' ? cachedMe() : me;
 	if (me !== 'offline') cacheMe(me);
+	refusal = null;
 	if (account.me?.approved) await db.connect(connector);
 	updateStatus();
 }
