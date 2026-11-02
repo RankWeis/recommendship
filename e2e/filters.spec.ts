@@ -2,10 +2,10 @@
 // type tabs. Person and hype apply to the same recommendation: "Sam said you MUST".
 
 import { expect, test, type Page } from '@playwright/test';
-import { onList, openDevice, setWho, uniqueEmail } from './helpers';
+import { addButton, onList, openDevice, setWho, uniqueEmail } from './helpers';
 
 async function add(page: Page, title: string, who: string, hype?: '★★★ you MUST' | '★★ you should') {
-	await page.getByTitle('Add (n)').click();
+	await addButton(page).click();
 	await page.getByPlaceholder('Piranesi, Severance').fill(title);
 	// Hype first: once a name is typed, its suggestions cover the hype button.
 	if (hype) {
