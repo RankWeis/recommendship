@@ -20,8 +20,11 @@ export async function openDevice(context: BrowserContext, email: string): Promis
 	return page;
 }
 
+/** The Add button that's showing: the header one on desktop, the floating + on touch screens. */
+export const addButton = (page: Page) => page.getByTitle('Add (n)').filter({ visible: true });
+
 export async function quickAdd(page: Page, title: string, who: string) {
-	await page.getByTitle('Add (n)').click();
+	await addButton(page).click();
 	await page.getByPlaceholder('Piranesi, Severance').fill(title);
 	await setWho(page, who);
 	await page.getByRole('button', { name: 'Save', exact: true }).click();

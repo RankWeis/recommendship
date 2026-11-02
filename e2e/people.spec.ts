@@ -2,7 +2,7 @@
 // check another device ends up with the same result (so the server accepted it).
 
 import { expect, test, type Page } from '@playwright/test';
-import { onList, openDevice, quickAdd, setWho, uniqueEmail } from './helpers';
+import { addButton, onList, openDevice, quickAdd, setWho, uniqueEmail } from './helpers';
 
 const openPerson = async (page: Page, name: string) => {
 	await page.getByRole('link', { name: 'People' }).click();
@@ -23,7 +23,7 @@ test('merge a mistyped person into the right one, and delete a person', async ({
 	await quickAdd(page, 'Past Lives', 'Sam');
 	await quickAdd(page, 'Aftersun', 'Sma');
 	// Sma also "recommended" Past Lives: attached to the same item, so the merge has a duplicate to fold.
-	await page.getByTitle('Add (n)').click();
+	await addButton(page).click();
 	await page.getByPlaceholder('Piranesi, Severance').fill('Past Lives');
 	await setWho(page, 'Sma');
 	await page.getByRole('button', { name: 'Save', exact: true }).click();

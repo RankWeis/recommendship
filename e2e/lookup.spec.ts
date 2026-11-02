@@ -3,7 +3,7 @@
 // and never calls TMDB. Saving, de-duplicating and syncing the details are real.
 
 import { expect, test, type BrowserContext } from '@playwright/test';
-import { onList, openDevice, quickAdd, setWho, uniqueEmail } from './helpers';
+import { addButton, onList, openDevice, quickAdd, setWho, uniqueEmail } from './helpers';
 
 const FILMS = [
 	{ source: 'TMDB_MOVIE', id: '693134', title: 'Dune: Part Two', year: 2024, creator: null, imageUrl: 'https://image.tmdb.org/t/p/w185/dune2.jpg' },
@@ -39,7 +39,7 @@ test('pick the real title in Quick Add, add to it again, and link an item typed 
 	const page = await openDevice(phone, email);
 
 	// "dune" → pick Dune: Part Two; the director arrives after saving.
-	await page.getByTitle('Add (n)').click();
+	await addButton(page).click();
 	await page.getByPlaceholder('Piranesi, Severance').fill('dune');
 	await page.getByRole('button', { name: /^Dune: Part Two\s+2024/ }).click();
 	await expect(page.getByText('✓ Dune: Part Two · 2024')).toBeVisible();
@@ -49,7 +49,7 @@ test('pick the real title in Quick Add, add to it again, and link an item typed 
 	await expect(onList(page, 'Dune: Part Two').locator('xpath=../..').locator('img.poster')).toBeVisible();
 
 	// Typed differently, matched to the same film: it's the same item, now from Jo too.
-	await page.getByTitle('Add (n)').click();
+	await addButton(page).click();
 	await page.getByPlaceholder('Piranesi, Severance').fill('dune pt 2');
 	await page.getByRole('button', { name: /^Dune: Part Two\s+2024/ }).click();
 	await setWho(page, 'Jo');
