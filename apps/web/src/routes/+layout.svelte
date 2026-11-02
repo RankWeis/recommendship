@@ -112,7 +112,7 @@
 				title={SYNC_LABEL[account.sync] + (account.queued ? ` · ${account.queued} to upload` : '')}
 				aria-label="Account and sync: {SYNC_LABEL[account.sync]}"
 			>
-				<span class="dot {account.sync}"></span>
+				<span class="dot {account.sync}"></span><span class="sync-label" aria-hidden="true">Sync</span>
 			</a>
 		</nav>
 	</div>
@@ -230,14 +230,17 @@
 		color: var(--text);
 	}
 
+	/* The dot alone didn't read as "account": a muted grey ring before it turns green. The
+	   label says what it is; the dot still carries the state. */
 	nav a.sync {
-		display: grid;
-		place-items: center;
-		width: 2rem;
-		padding: 0.35rem 0;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		margin-left: 0.2rem;
 	}
 
 	.dot {
+		flex-shrink: 0;
 		width: 10px;
 		height: 10px;
 		border-radius: 50%;
@@ -312,8 +315,9 @@
 		}
 	}
 
-	/* Phones, Pro Max sizes (430–440 px) included: the full-size header needs about 460 px. */
-	@media (max-width: 480px) {
+	/* Phones, Pro Max sizes (430–440 px) included: the full-size header, with the Sync label,
+	   needs about 510 px. */
+	@media (max-width: 520px) {
 		.bar {
 			gap: 0.5rem;
 		}
@@ -332,7 +336,8 @@
 		}
 
 		nav a.sync {
-			width: 1.5rem;
+			gap: 0.25rem;
+			margin-left: 0.1rem;
 		}
 
 		.help {
@@ -342,8 +347,9 @@
 		}
 	}
 
-	/* The smallest phones (iPhone SE, 320 px wide): the icon stands in for the name. */
-	@media (max-width: 360px) {
+	/* Most phones below the Pro Max sizes (iPhone SE at 320 px up to 402 px): the icon stands
+	   in for the name, so the Sync label fits. The compact header needs about 410 px. */
+	@media (max-width: 412px) {
 		.brand-text {
 			display: none;
 		}
