@@ -7,6 +7,7 @@
 	import { LIST_ITEM_COLUMNS, LIST_ITEM_FROM, parseJson, type ListItemRow } from '#lib/db/rows.ts';
 	import { usePeople } from '#lib/people.svelte.ts';
 	import { loadSampleData } from '#lib/sample.ts';
+	import { account } from '#lib/sync.svelte.ts';
 	import { ui } from '#lib/ui.svelte.ts';
 
 	const SORTS = {
@@ -91,6 +92,12 @@
 		<div class="empty">
 			<h2>The Put List is empty</h2>
 			<p>When someone says “you have to watch…”, tap ＋ and log it with who said it.</p>
+			{#if account.me === null}
+				<p class="muted">
+					No account needed to try it: everything stays on this device. <a href="/account">Sign in</a> any time to back it up and use it on
+					your other devices.
+				</p>
+			{/if}
 			<p class="small"><button class="link-btn" onclick={() => (ui.aboutOpen = true)}>New here? What Recommendship does</button></p>
 			<p class="actions">
 				<button class="btn primary" onclick={() => (ui.quickAddOpen = true)}>Add a recommendation</button>

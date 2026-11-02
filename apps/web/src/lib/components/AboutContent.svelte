@@ -28,8 +28,8 @@
 
 	<h2>Your data stays yours</h2>
 	<ul>
-		<li>Everything lives on your device first, so the app works with no signal.</li>
-		<li>Sign in with Google to back it up and see it on your phone and computer.</li>
+		<li><b>No sign-up needed to try it.</b> Everything lives on your device first, so the app works with no account and no signal.</li>
+		<li>Sign in with Google whenever you like to back it up and see it on your phone and computer. What you added before signing in comes with you.</li>
 		<li>No ads, no tracking. You can download all of it, or the spreadsheet version, from the Account page any time.</li>
 	</ul>
 	<p>The details are in the <a href="/privacy">privacy policy</a>.</p>
@@ -44,7 +44,7 @@
 	<h2>Good to know</h2>
 	<ul>
 		<li>It's free. Each account can hold up to 10,000 items, 10,000 people and 10,000 recommendations.</li>
-		<li>Sign-ups open a few at a time. If yours is waiting, you can use the app on your device meanwhile.</li>
+		<li>New accounts start syncing right away while there's room; past that, sign-ups open a few at a time. If yours is waiting, you can use the app on your device meanwhile.</li>
 		<li>Movie and TV details and posters come from TMDB, books from Open Library.</li>
 		<li>The code is open: <a href="https://github.com/RankWeis/recommendship" target="_blank" rel="noopener">github.com/RankWeis/recommendship</a>.</li>
 	</ul>
