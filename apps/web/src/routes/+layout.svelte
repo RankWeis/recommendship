@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	import { page } from '$app/state';
+	import { page, updated } from '$app/state';
 	import AboutContent from '#lib/components/AboutContent.svelte';
 	import QuickAdd from '#lib/components/QuickAdd.svelte';
 	import RateSheet from '#lib/components/RateSheet.svelte';
@@ -9,8 +9,9 @@
 	import { initDb, releaseDb } from '#lib/db/index.ts';
 	import { startAutoRecompute } from '#lib/scoring.ts';
 	import { account, startSync } from '#lib/sync.svelte.ts';
+	import { toast } from '#lib/toast.svelte.ts';
 	import { ui } from '#lib/ui.svelte.ts';
-	import { onMount, type Snippet } from 'svelte';
+	import { onMount, untrack, type Snippet } from 'svelte';
 
 	let { children }: { children: Snippet } = $props();
 
@@ -54,6 +55,14 @@
 				status = 'failed';
 			});
 		return () => stops.forEach((s) => s());
+	});
+
+	// SvelteKit spots a new deploy (it checks the version when the tab comes back, every
+	// hour, and when a chunk fails to load) and reloads on the next navigation anyway. Say
+	// so, and let the person pick the moment rather than lose a half-filled sheet to it.
+	// untrack: pushing the toast reads the toast list, which must not re-run this effect.
+	$effect(() => {
+		if (updated.current) untrack(() => toast('A new version is ready.', { label: 'Reload', run: () => location.reload() }, Infinity));
 	});
 
 	const SYNC_LABEL: Record<string, string> = {

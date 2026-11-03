@@ -12,6 +12,8 @@ check() {
 
 check "API health" curl -fsS --retry 5 --retry-all-errors "$api/healthz"
 check "PWA shell" bash -c "curl -fsS '$api/' | grep -q '<title>Recommendship</title>'"
+check "Link preview tags" bash -c "curl -fsS '$api/' | grep -q 'property=\"og:image\"'"
+check "Link preview image" curl -fsS "$api/og-image.png"
 check "Service worker" curl -fsS "$api/service-worker.js"
 check "JWKS (PowerSync verifies tokens with it)" bash -c "curl -fsS '$api/api/auth/jwks' | grep -q EdDSA"
 check "Dev sign-in is off" bash -c "curl -fsS '$api/api/public/config' | grep -q '\"devLogin\":false'"
