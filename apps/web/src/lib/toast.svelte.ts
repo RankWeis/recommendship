@@ -12,8 +12,10 @@ export function dismissToast(id: number) {
 	if (i >= 0) toasts.splice(i, 1);
 }
 
+/** `ms = Infinity` keeps the toast until its action is taken (for "reload to update"). */
 export function toast(message: string, action?: Toast['action'], ms = 4500) {
 	const id = nextId++;
 	toasts.push({ id, message, action });
-	setTimeout(() => dismissToast(id), ms);
+	// setTimeout treats Infinity as 0, which would dismiss it at once.
+	if (Number.isFinite(ms)) setTimeout(() => dismissToast(id), ms);
 }
