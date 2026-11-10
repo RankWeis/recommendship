@@ -22,6 +22,8 @@ jobs:
     if: vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     strategy:
+      # One environment being down must not cancel the other's wake.
+      fail-fast: false
       matrix:
         sync: ['https://recommendship-sync.fly.dev', 'https://recommendship-staging-sync.fly.dev']
     steps:
@@ -35,7 +37,8 @@ jobs:
           [[ "$code" =~ ^[2-4] ]]
 
   compact:
-    if: vars.DEPLOY_ENABLED == 'true'
+    # Run even if a wake failed: a broken staging must not stop production's compaction.
+    if: ${{ !cancelled() && vars.DEPLOY_ENABLED == 'true' }}
     needs: wake
     runs-on: ubuntu-latest
     strategy:
